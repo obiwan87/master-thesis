@@ -22,18 +22,20 @@ classdef Word2VecModel < handle
             if nargin < 3
                 K = 10;
             end
-            
-            if ischar(w)
+	    
+	    if ischar(w)
                 v = obj.vector(w);
             elseif isvector(w)
+		display('Is vector')
                 v = w;
-                endVv 
+            end
+		
             [idx, d] = knnsearch(obj.Vectors, v, 'K', K, 'distance', ...
                 'cosine');
             
+	    size(idx)            
             T = table(obj.Terms(idx), d', 'VariableNames', {'word', 'distance'})
-            
-        end
+	end
             
         function plotknn( obj, w, k)
             
