@@ -18,34 +18,36 @@ classdef Word2VecModel < handle
             v = obj.Vectors(p,:);
         end
         
-        function similar(obj, w, K)
+        function [idx, d, T] = similar(obj, w, K)
             if nargin < 3
                 K = 10;
             end
-	    
-	    if ischar(w)
+            
+            if ischar(w)
                 v = obj.vector(w);
             elseif isvector(w)
-		display('Is vector')
+                display('Is vector')
                 v = w;
             end
-		
             [idx, d] = knnsearch(obj.Vectors, v, 'K', K, 'distance', ...
                 'cosine');
             
-	    size(idx)            
-            T = table(obj.Terms(idx), d', 'VariableNames', {'word', 'distance'})
-	end
-            
+            T = table(obj.Terms(idx), d', 'VariableNames', {'word', 'distance'});
+            if nargout <= 0
+                T %#ok<NOPRT>
+            end
+        end
+        
+        
         function plotknn( obj, w, k)
             
-            if ischar(w)            
+            if ischar(w)
                 idx = knnsearch(obj.Vectors, obj.vector(w), 'K', k+1, 'distance', 'cosine');
                 D = obj.Vectors(idx,:);
-            elseif isvector(w)                
+            elseif isvector(w)
                 if numel(w) ~= size(obj.Vectors, 2)
                     error('Dimension of reference vector doesn''t match current model');
-                end                
+                end
                 idx = knnsearch(obj.Vectors, w, 'K', k, 'distance', 'cosine');
                 D = vertcat(w, obj.Vectors(idx,:));
             else
@@ -68,12 +70,11 @@ classdef Word2VecModel < handle
             end
             
             for i=1:k
-                term = obj.Terms(idx(i));                
-                text(d(i+1,1), d(i+1,2), term);                
+                term = obj.Terms(idx(i));
+                text(d(i+1,1), d(i+1,2), term);
             end
             hold off
         end
     end
     
 end
-

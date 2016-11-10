@@ -10,13 +10,15 @@ from nltk.corpus import stopwords
 
 from utils.utils import replace_umlauts, Timer
 
-model_path = "/media/echobot/Volume/home/simon/uni/masterarbeit/de/model/01/my.model"
+
+model_path = "/media/echobot/Volume/home/simon/uni/masterarbeit/data/de/model/01/my.model"
 #model_path = "/home/echobot/ram/my.model"
 with Timer('Loading model from %s' % model_path):
     model = Word2Vec.load_word2vec_format(model_path, binary=True)
 
 with Timer('Preprocessing evaluation dataset ...'):
-    dataset_path = "/media/echobot/Volume/home/simon/uni/masterarbeit/data/business_signals_samples/fuehrungswechsel.txt"
+    filename = 'gewinnspiel.txt'
+    dataset_path = "/media/echobot/Volume/home/simon/uni/masterarbeit/data/business_signals_samples/" + filename
     with open(dataset_path, 'r') as f:
         reader = csv.reader(f, delimiter='\t')
         S = [(l,s) for l, s in reader]

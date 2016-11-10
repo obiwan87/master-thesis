@@ -10,12 +10,17 @@ classdef DocumentSet < handle
         I = [] % Document-Matrix with Words as indexes of V
         W = [] % Word-Count-Matrix
         TfIdf = []
+        EmptyLines = [];
     end
     
     methods
-        function obj = DocumentSet(filename)
-            obj.Filename = filename;
-            obj.read();
+        function obj = DocumentSet(s)
+            if ischar(s)
+                obj.Filename = s;
+                obj.read();
+            elseif iscell(s)
+                obj.T = s;
+            end
         end
         
         function I = terms2Indexes(obj)
@@ -80,13 +85,18 @@ classdef DocumentSet < handle
             
             fid = fopen(obj.Filename);
             tline = fgets(fid);
-            
+            k = 1;
+            empty_lines = [];
             while ischar(tline)
                 tline = strtrim(tline);
                 if ~isempty(tline)
                     obj.T{end+1} = tline;
+                else
+                    warning('Empty line detected');
+                    empty_lines = [empty_lines; k]; %#ok<AGROW>
                 end
                 tline = fgets(fid);
+                k = k +1;
             end
             
             obj.T = cellfun(@(x) strsplit(x), obj.T, 'UniformOutput', false);
@@ -94,6 +104,8 @@ classdef DocumentSet < handle
             if size(obj.T, 1) < size(obj.T, 2)
                 obj.T = obj.T';
             end
+            
+            obj.EmptyLines = empty_lines;
         end
     end
 end
