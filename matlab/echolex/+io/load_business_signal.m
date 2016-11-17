@@ -4,12 +4,13 @@ function [ D, labels ] = load_business_signal( name )
 
 global business_signals_data
 
-D = io.DocumentSet(fullfile(business_signals_data, sprintf('%s.txt.corpus', name)));
-D.tfidf();
-
-labels = dlmread(fullfile(business_signals_data, sprintf('%s.txt.labels', name)));
+filename = fullfile(business_signals_data, sprintf('%s.txt.labels', name));
+labels = dlmread(filename);
 labels = categorical(labels);
-labels(D.EmptyLines) = [];
+
+filename = fullfile(business_signals_data, sprintf('%s.txt.corpus', name));
+D = io.DocumentSet(filename, labels);
+D.tfidf();
 
 end
 

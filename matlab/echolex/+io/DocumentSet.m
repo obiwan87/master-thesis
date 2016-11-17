@@ -11,16 +11,30 @@ classdef DocumentSet < handle
         W = [] % Word-Count-Matrix
         TfIdf = []
         EmptyLines = [];
+        Y = []
     end
     
     methods
-        function obj = DocumentSet(s)
+        function obj = DocumentSet(s, labels)
+            if nargin < 2
+                labels = [];
+            end
+            
             if ischar(s)
                 obj.Filename = s;
                 obj.read();
             elseif iscell(s)
                 obj.T = s;
+                e = cellfun(@(x) isempty(x), obj.T);
+                if sum(e) > 0
+                    warning('%d empty documents', sum(e));
+                    obj.T = obj.T(~e);
+                    obj.EmptyLines = find(e);
+                end
             end
+            
+            obj.Y = labels;
+            obj.Y(obj.EmptyLines) = [];
         end
         
         function I = terms2Indexes(obj)
@@ -51,8 +65,8 @@ classdef DocumentSet < handle
         end
         
         function V = extractVocabulary(obj)
-            V = func.foldr(obj.T, [], @(x,y) [x y]);            
-            V = unique(V)';           
+            V = func.foldr(obj.T, [], @(x,y) [x y]);
+            V = unique(V)';
             e = cellfun(@isempty, V);
             V = V(~e);
             obj.V = V;
@@ -66,7 +80,7 @@ classdef DocumentSet < handle
             vocSize = numel(obj.V); % Vocabulary Size
             
             W = sparse(numDocs,vocSize);
-            for i=1:numDocs 
+            for i=1:numDocs
                 d = obj.I{i};
                 M = unique(d);
                 C = arrayfun(@(x) sum(x==d), M);
@@ -76,11 +90,64 @@ classdef DocumentSet < handle
             
             obj.W = W;
         end
+        
+        function D = filter_vocabulary(obj, minf, maxf, keep_n)
+            if nargin < 4
+                keep_n = NaN;
+            end
+            
+            F = obj.termFrequencies();
+            s = F.Frequency >= minf & F.Frequency <= maxf;
+            
+            F = F(s,:);
+            
+            if ~isnan(keep_n) && ~isinf(keep_n)
+                [~, ii] = sort(F.Frequency, 'descend');
+                F = F(ii(1:keep_n),:);
+            end
+            
+            ids = cellfun(@(x) find(strcmp(x, obj.V)), F.Term);
+            %FT = cellfun(@(x) obj.V(x), fids, 'UniformOutput', false, 'ErrorHandler', @(x) fprintf('%d\n', x) );
+            
+            FT = cell(size(obj.T));
+            numDocs = numel(obj.T);
+            for i=1:numDocs
+                w = arrayfun(@(x) sum(x==ids) > 0, obj.I{i});
+                FT{i} = obj.T{i}(w);
+            end
+            D = obj.newFrom(FT);
+        end
+        
+        function ED = keep_word_ids(obj, ids)
+            EI = cellfun(@(s) s(arrayfun(@(w) any(w == ids), s)), obj.I, 'UniformOutput', false);
+            ET = cellfun(@(s) obj.V(s)', EI, 'UniformOutput', false);
+            ED = obj.newFrom(ET);
+        end
+        
+        function ED = exlude_word_ids(obj, ids)
+            EI = cellfun(@(s) s(arrayfun(@(w) ~any(w == ids), s)), obj.I, 'UniformOutput', false);
+            ET = cellfun(@(s) obj.V(s)', EI, 'UniformOutput', false);
+            ED = obj.newFrom(ET);
+        end
+        
+        function f = frequency_of(obj, word)
+            flat_ind = func.foldr(obj.I, [], @(x,y) [x y]);
+            i = find(strcmp(word, obj.V));
+            f = sum(i == flat_ind);
+        end
+        
+        function i = index_of(obj, word)
+            i = find(strcmp(word, obj.V));
+        end
+        
+        function N = newFrom(obj, T)
+            N = io.DocumentSet(T, obj.Y);
+        end
+        
     end
     
     methods(Access=private)
         function read(obj)
-            
             obj.T = {};
             
             fid = fopen(obj.Filename);
@@ -100,7 +167,7 @@ classdef DocumentSet < handle
             end
             
             obj.T = cellfun(@(x) strsplit(x), obj.T, 'UniformOutput', false);
-                        
+            
             if size(obj.T, 1) < size(obj.T, 2)
                 obj.T = obj.T';
             end
