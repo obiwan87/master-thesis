@@ -7,12 +7,13 @@ classdef DocumentSet < handle
         Filename = '' % Source Filename
         T = [] % Documents
         V = [] % Vocabulary of Document Set
+        V_hash = [];
         I = [] % Document-Matrix with Words as indexes of V
         W = [] % Word-Count-Matrix
         TfIdf = []
         EmptyLines = [];
         Y = []
-    end
+    end    
     
     methods
         function obj = DocumentSet(s, labels)
@@ -70,6 +71,7 @@ classdef DocumentSet < handle
             e = cellfun(@isempty, V);
             V = V(~e);
             obj.V = V;
+            obj.V_hash = cellfun(@(x) hex2dec(DataHash(x)), V);
         end
         
         function W = wordCountMatrix(obj)
@@ -144,6 +146,13 @@ classdef DocumentSet < handle
             N = io.DocumentSet(T, obj.Y);
         end
         
+        function c = compact(obj)
+            c = io.DocumentSet(obj.T, obj.Y);
+            c.V = obj.V;
+            c.I = obj.I;
+            c.T = [];
+            c.Y = [];
+        end
     end
     
     methods(Access=private)

@@ -5,11 +5,19 @@ classdef Word2VecModel < handle
     properties
         Terms
         X
+        Terms_hash
     end
     
     methods
-        function obj = Word2VecModel(terms, vectors)
+        function obj = Word2VecModel(terms, vectors, terms_hash)
             obj.Terms = terms;
+            
+            if nargin < 3
+                obj.Terms_hash = cellfun(@(x) hex2dec(DataHash(x)), terms);
+            else
+                obj.Terms = terms_hash;
+            end
+            
             obj.X = vectors;
         end
         

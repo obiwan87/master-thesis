@@ -5,8 +5,12 @@ function [ D, labels ] = load_business_signal( name )
 global business_signals_data
 
 filename = fullfile(business_signals_data, sprintf('%s.txt.labels', name));
-labels = dlmread(filename);
-labels = categorical(labels);
+labels = uint8(dlmread(filename));
+
+if iscolumn(labels) % just for prettier json representation
+    labels = labels';
+end
+% labels = categorical(labels);
 
 filename = fullfile(business_signals_data, sprintf('%s.txt.corpus', name));
 D = io.DocumentSet(filename, labels);

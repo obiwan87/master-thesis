@@ -23,7 +23,7 @@ classdef Word2VecDocumentSet < io.DocumentSet
     methods(Access=protected)
         function calculateTermsMapping(obj)
             obj.extractVocabulary();
-            obj.Vi = cellfun(@(x) find(strcmp(x,obj.m.Terms)), obj.V);
+            obj.Vi = arrayfun(@(x) find(x==obj.m.Terms_hash), obj.V_hash);
         end
     end
 end
