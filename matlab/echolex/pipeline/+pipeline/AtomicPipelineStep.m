@@ -14,15 +14,15 @@ classdef AtomicPipelineStep < pipeline.PipelineStep
             obj.config(results);            
         end
         
-        function r = execute(obj, varargin)
+        function r = execute(obj, context, varargin)
             args = obj.parsePipelineInput(varargin);
-            r = obj.doExecute(args);
+            r = obj.doExecute(context, args);
             obj.LastOutput = r;
         end
     end
     
     methods(Abstract)
-        r = doExecute(args);        
+        r = doExecute(context, args);        
     end
     
     methods(Access=protected)

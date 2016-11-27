@@ -12,7 +12,7 @@ classdef NoOperation < pipeline.AtomicPipelineStep
             obj.Name = name;
         end
         
-        function out = doExecute(~, args)
+        function out = doExecute(~, ~, args)
             in = args.Input;
             out = struct('Out', in);
         end

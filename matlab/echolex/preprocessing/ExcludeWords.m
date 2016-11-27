@@ -13,7 +13,7 @@ classdef ExcludeWords < pipeline.preprocessing.Preprocessor
             obj = obj@pipeline.preprocessing.Preprocessor(varargin{:});
         end
         
-        function r = doExecute(obj, args)            
+        function r = doExecute(obj, ~, args)            
             D = args.DocumentSet;
             
             ED = D.filter_vocabulary(obj.MinCount, obj.MaxCount, obj.KeepN);

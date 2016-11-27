@@ -13,13 +13,15 @@ classdef SVMClassifier < pipeline.classification.Classifier
             obj.SaveOutput = true;
         end
         
-        function r = doExecute(obj, args)
+        function r = doExecute(obj, ~, args)
             dlp = args.DataLabelProvider;
             % For reproducibility, set default seed
             rng default
             svmmodel = fitcsvm(dlp.Data, dlp.Labels, obj.SVMParams{:});
+            loss = kfoldLoss(svmmodel);
+            r = struct();
+            r.Out = struct('loss', loss, 'meanAccuracy', 1-loss);
             
-            r = struct('loss', kfoldLoss(svmmodel), 'meanAccuracy', -1);
             
             %            trainedModels = svmmodel.Trained;            
             %             accuracies = zeros(numel(trainedModels), 1);
@@ -33,7 +35,6 @@ classdef SVMClassifier < pipeline.classification.Classifier
             
             % Loss and Accuracy are equivalent (accuracy = 1 - loss)
             % in binary classification.
-            r.meanAccuracy = 1-r.loss;
         end
     end
     

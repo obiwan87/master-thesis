@@ -2,11 +2,11 @@ classdef ExperimentReport < handle
     %BASICREPORTER Reports the arguments and the output of each step
     %   Detailed explanation goes here
     properties
-        ExperimentId        
+        ExperimentId
         Date
         Dataset
         Name
-        Description        
+        Description
         Steps = {}
         Duration
     end
@@ -56,10 +56,10 @@ classdef ExperimentReport < handle
         end
         
         function report(obj, step, ~, out, pathNr, stepNr, duration)
-            r = struct();            
+            r = struct();
             r.Name = shortclass(step);
             
-            r.Args = cellfun(@(x) ife(isa(x,'function_handle'), str(x), x), step.Args, 'UniformOutput', false);            
+            r.Args = cellfun(@(x) ife(isa(x,'function_handle'), str(x), x), step.Args, 'UniformOutput', false);
             r.Args = varargin2struct(r.Args{:});
             r.Duration = duration;
             r.PathNr = pathNr;
@@ -68,7 +68,7 @@ classdef ExperimentReport < handle
             if any(strcmp('Report', fieldnames(out)))
                 r.Report = out.Report;
             end
-
+            
             if strfind(class(step), 'Classifier')
                 r.Out = out;
             end
@@ -80,6 +80,19 @@ classdef ExperimentReport < handle
             end
             
             obj.Steps{pathNr, stepNr} = r;
+        end
+        
+        function normalize(obj)
+            for j=2:size(obj.Steps)
+                steps =obj.Steps(j,:);
+                for k=1:numel(steps)
+                    if isempty(steps{k})
+                        obj.Steps{j,k} = obj.Steps{j-1,k};
+                    else
+                        break;
+                    end
+                end
+            end
         end
         
         function t = table(obj, sessionNr)
@@ -144,14 +157,14 @@ classdef ExperimentReport < handle
                     else
                         nids(i,j) = nids(i-1,j);
                     end
-                    pnid = nids(i,j);                   
+                    pnid = nids(i,j);
                 end
                 pnid = root;
             end
             
             [~, ii]= sortrows(edges, [1 2]);
             edgeLabels = edgeLabels(ii);
-                              
+            
             fig = figure;
             plot(d, 'NodeLabel', nodeLabels);%, 'EdgeLabel', edgeLabels);
             ax = fig.CurrentAxes;

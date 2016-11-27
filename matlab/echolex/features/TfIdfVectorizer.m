@@ -7,7 +7,7 @@ classdef TfIdfVectorizer < pipeline.featextraction.FeatureExtractor
     end
     
     methods        
-        function r = doExecute(~, args)            
+        function r = doExecute(~, ~, args)            
             D = args.DocumentSet;
             
             r = struct('Out', datalabelprovider(features.tfidfvectorizer(D.m.X(D.Vi,:),D.tfidf()), D.Y));

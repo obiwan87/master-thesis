@@ -27,13 +27,24 @@ classdef ReportScheme < handle
                     
                     val = [];
                     s = out;
+                    
+                    found = true;                    
                     for j=1:numel(varpath)
                        p = varpath{j};
+                       
+                       if ( ~isstruct(s) && ~isobject(s) ) || sum(strcmp(p,fieldnames(s))) <= 0
+                           val = [];
+                           found = false;
+                           break;
+                       end
                        val = s.(p);
+                       
                        s = val;
                     end
                     
-                    r.(varname) = val;
+                    if ~found
+                        r.(varname) = val;
+                    end
                 end                                
             end
         end

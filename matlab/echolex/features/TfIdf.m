@@ -6,7 +6,7 @@ classdef TfIdf < pipeline.featextraction.FeatureExtractor
     end
     
     methods        
-        function r = doExecute(~, args)
+        function r = doExecute(~, ~, args)
             D = args.DocumentSet;            
             r = struct('Out', datalabelprovider(full(D.tfidf()), D.Y));
         end

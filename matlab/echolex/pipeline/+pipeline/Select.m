@@ -3,14 +3,18 @@ classdef Select < pipeline.CompositePipelineStep
     %   Detailed explanation goes here
     
     properties
-        ObjectiveFcn
-        ObjectiveStep 
+        ObjectiveFunction
     end
     
     methods
         function obj = Select(objectiveFcn, varargin)
             obj.Children = varargin;
-            obj.ObjectiveFcn = objectiveFcn;
+            obj.ObjectiveFunction = objectiveFcn;
+            
+        end
+        
+        function selector = createSelector(obj)
+            selector = pipeline.InputSelector(obj.Children, obj.ObjectiveFunction);
         end
     end
     

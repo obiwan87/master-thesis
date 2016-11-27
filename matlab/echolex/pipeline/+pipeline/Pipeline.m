@@ -4,13 +4,22 @@ classdef Pipeline < handle
     
     properties
         RootSequence
-        CurrentExecutionPath = 1;
-        CurrentStep  = 1;
+        
+        % Save outputs of nodes for later use
+        Outputs
+        
+        Reporter = []; % Report outputs of nodes
+        
+        % Graph Information
+        Graph
+        PGraph
+        InDegree
+        OutDegree
+        
+        % Execution State
         ExecutionPaths = {};
-        Outputs = {};
-        LastFork = {1};
-        Reporter = [];
-        DoExecute = [];
+        CurrentExecutionPath = 1;
+        CurrentStep
     end
     
     methods
@@ -20,169 +29,85 @@ classdef Pipeline < handle
             else
                 obj.RootSequence = sequence(varargin{:});
             end
+            
+            obj.Outputs = containers.Map('KeyType', 'uint32', 'ValueType', 'any');
+            obj.PGraph = pipeline.PipelineGraph(obj);
+            obj.Graph = obj.PGraph.createGraph();
+            obj.InDegree = indegree(obj.Graph);
+            obj.OutDegree = outdegree(obj.Graph);
+            obj.CurrentStep = containers.Map('KeyType', 'uint32', 'ValueType', 'uint32');
+            obj.CurrentStep(obj.CurrentExecutionPath) = 1;
         end
         
-        function r = execute(obj, input, reporter, doExecute)
+        function execute(obj, input, reporter)
             if nargin < 3
                 reporter = [];
             end
-                        
-            if nargin < 5
-                doExecute = true;
-            end
             
-            obj.ExecutionPaths = {};
+            root = find(indegree(obj.Graph) == 0);
             obj.Reporter = reporter;
-            obj.DoExecute = doExecute;
             
             start = tic;
-            obj.sequence(input, obj.RootSequence);
+            obj.dfexec(root, input, 1); %#ok<FNDSB>
             duration = toc(start);
             
             if ~isempty(obj.Reporter)
                 obj.Reporter.Duration = duration;
+                obj.Reporter.normalize();
+            end
+        end
+        
+        function dfexec(obj, parent, input, depth)
+            children = successors(obj.Graph, parent);
+            
+            if isempty(children)
+                obj.CurrentExecutionPath = obj.CurrentExecutionPath + 1;
             end
             
-            r = reporter;
-        end
-        
-        function sequence(obj, input, S)
-            in = struct('Out', input);
-            prevS = [];
-            s = S.Children{1};
-            p = s;
-            while ~isempty(p)
-                while s ~= pipeline.EOP.getInstance
-                    if isa(s, 'pipeline.Fork')
-                        obj.LastFork{end+1} = obj.CurrentStep;
-                        obj.fork(in.Out, s);
-                        fprintf('<EOF>\n');
-                        return
-                    elseif isa(s, 'pipeline.Sequence')
-                        obj.sequence(in.Out, s);
-                        return
-                    elseif isa(s, 'pipeline.Select')
-                        p = pipeline.Pipeline(s.Children{:});
-                        
-                        start = tic;
-                        subReport = [];
-                        if ~isempty(obj.Reporter)
-                            subReport = obj.Reporter.cloneWithoutSteps();
-                        end
-                        
-                        p.execute(in.Out, subReport);
-                        duration = toc(start);
-                        
-                        % Get the best execution path
-                        objSteps = cell(size(p.ExecutionPaths,1),1); 
-                        outputs = cell(size(p.ExecutionPaths,1),1);
-                        
-                        % Gather results of all execution paths
-                        for k=1:size(p.ExecutionPaths,1)
-                            executionPath = p.ExecutionPaths(k,:);
-                            idx = find(~cellfun(@isempty, executionPath),1,'last');                            
-                            objSteps{k} = p.Outputs{k, idx};
-                            
-                            if isempty(p.ExecutionPaths{k,1})
-                                p.ExecutionPaths{k,1} = p.ExecutionPaths{k-1,1};
-                            end
-                            
-                            outputs{k} = p.ExecutionPaths{k,1};
-                        end
-                        
-                        % Get index of best result according to passed
-                        % objective function.
-                        selectedIdx = s.ObjectiveFcn(objSteps);
-                        
-                        % This output step was selected
-                        selectedOutputStep = outputs{selectedIdx};
-                        obj.ExecutionPaths{obj.CurrentExecutionPath, obj.CurrentStep} = selectedOutputStep;
-                        out = selectedOutputStep.LastOutput;
-                        
-                        if ~isempty(subReport)
-                            out.Report = subReport;
-                        end
-                        
-                        %Go on as if an atomic pipeline step was executed
-                        if selectedOutputStep.SaveOutput
-                            obj.Outputs{obj.CurrentExecutionPath, obj.CurrentStep} = out;
-                        end
-                        
-                        if ~isempty(obj.Reporter)
-                            obj.Reporter.report(selectedOutputStep, in, out, obj.CurrentExecutionPath, obj.CurrentStep, duration);
-                        end
-                        
-                        obj.CurrentStep = obj.CurrentStep + 1;
-                        
-                    elseif isa(s,'pipeline.AtomicPipelineStep')
-                        fprintf('%s -> ', class(s))
-                        
-                        if obj.DoExecute
-                            start = tic;
-                            out = s.execute(in.Out);
-                            duration = toc(start);
-                            
-                            % Report results of this step
-                            if ~isempty(obj.Reporter)
-                                obj.Reporter.report(s, in, out, obj.CurrentExecutionPath, obj.CurrentStep, duration);
-                            end
-                        end
-                        
-                        if s.SaveOutput
-                            obj.Outputs{obj.CurrentExecutionPath, obj.CurrentStep} = out;
-                        end
-                        
-                        % Update execution state                        
-                        obj.ExecutionPaths{obj.CurrentExecutionPath,obj.CurrentStep} = s;
-                        obj.CurrentStep = obj.CurrentStep + 1;
-                    else 
-                        error('Pipeline Step not supported: %s', class(s))
-                    end
-                    
-                    in = out;
-                    prevS = s;
-                    s = s.NextStep;
-                end
-                % Ok, this is kind of tricky.
-                % Switch Context: Assume parent node
-                % has been executed. So get next step of parent
-                % and set parent to be the previous step.
-                p = prevS.Parent;
-                prevS = p;
-                if ~isempty(p)
-                    s = p.NextStep;
-                end
-            end
-            
-            % Keep track of the current execution state
-            obj.CurrentExecutionPath = obj.CurrentExecutionPath + 1;
-            obj.CurrentStep = popLastFork(obj);
-        end
-        
-        function lastFork = popLastFork(obj)
-            lastFork = obj.LastFork{end};
-            if numel(obj.LastFork) > 1
-                obj.LastFork = obj.LastFork(1:end-1);
-            end
-        end
-        
-        function fork(obj, input, F)
-            % Each child is a branch
-            for i=1:numel(F.Children)
-                S = F.Children{i}.asSequence();
+            for i=1:numel(children)
+                node = children(i);
+                step = obj.PGraph.Steps(node);
+                fprintf('-> %s', shortclass(step));
                 
-                obj.sequence(input, S);
-                fprintf('*\n');
-            end
-        end
+                start = tic;
+                out = step.execute(obj, input);                
+                duration = toc(start);
+                
+                if ~isempty(obj.Reporter)
+                    obj.Reporter.report(step, input, out, obj.CurrentExecutionPath, depth, duration);
+                end
+                
+                if step.SaveOutput
+                    obj.Outputs(node) = out;
+                end
 
-        function reset(obj)
-            obj.ExecutionPaths = {};
-            obj.CurrentExecutionPath = 1;
-            obj.CurrentStep  = 1;
-            obj.LastFork = {1};
-            obj.Reporter = [];
-            obj.DoExecute = [];
+                obj.dfexec(node, out.Out, depth + 1);
+            end
+            fprintf('\n');
         end
-    end    
+        
+        function plot(~)
+            %                         G.createGraph(previousNode);
+            %
+            %                         subgraphNodes = G.Nodes;
+            %                         outputs = outdegree(G.Graph, subgraphNodes);
+            %                         outputs = subgraphNodes(outputs==0);
+            %
+            %                         obj.Node = max(subgraphNodes) + 1;
+            %
+            %                         obj.Steps = [obj.Steps; G.Steps];
+            %                         obj.Steps(obj.Node) = s.createSelector(obj, G);
+            %
+            %                         subgraphOutputEdges = zeros(numel(outputs), 2);
+            %                         for k=1:numel(outputs)
+            %                             subgraphOutputEdges(k,:) = [outputs(k) obj.Node];
+            %                         end
+            %                         obj.Edges = [obj.Edges; G.Edges; subgraphOutputEdges];
+        end
+    end
+    methods(Access=private)
+        function newExecutionPath(obj)
+            obj.CurrentExecutionPath = obj.CurrentExecutionPath + 1;
+        end
+    end
 end

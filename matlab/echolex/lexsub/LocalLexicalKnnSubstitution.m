@@ -16,7 +16,7 @@ classdef LocalLexicalKnnSubstitution < LexicalSubstitutionPreprocessor
             obj = obj@LexicalSubstitutionPreprocessor(varargin{:});
         end
         
-        function r = doExecute(obj, args)
+        function r = doExecute(obj, ~, args)
             % Algorithm parameters 
             D = args.Word2VecDocumentSet;
             F = D.termFrequencies();
@@ -29,7 +29,7 @@ classdef LocalLexicalKnnSubstitution < LexicalSubstitutionPreprocessor
             info = struct();
             info.vocSizeBefore = numel(D.V);
             info.vocSizeAfter = numel(LD.V);
-            %info.LVi = LVi;
+            %info.LVi = LD.Vi;
             
             r.info = info;
         end

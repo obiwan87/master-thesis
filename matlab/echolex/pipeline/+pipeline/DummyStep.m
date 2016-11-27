@@ -12,7 +12,7 @@ classdef DummyStep < pipeline.AtomicPipelineStep
             obj.Name = name;
         end
         
-        function r = doExecute(obj, ~)
+        function r = doExecute(obj, ~, ~)
             fprintf('-> %s', obj.Name);
             r = struct('Out', 0);
         end

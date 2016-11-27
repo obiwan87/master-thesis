@@ -12,7 +12,7 @@ classdef GlobalLexicalKnnSubstitution < LexicalSubstitutionPreprocessor
         function obj = GlobalLexicalKnnSubstitution(varargin)
             obj = obj@LexicalSubstitutionPreprocessor(varargin{:});
         end
-        function r = doExecute(obj, args)
+        function r = doExecute(obj, ~, args)
             persistent D_            
             
             %Algorithm parameters
