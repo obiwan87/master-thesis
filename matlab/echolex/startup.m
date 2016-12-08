@@ -9,10 +9,10 @@ business_signals = dir(business_signals_data);
 business_signals = business_signals(~[business_signals.isdir]);
 business_signals = unique(cellfun(@(x) first(strsplit(x,'.')), {business_signals.name}, 'UniformOutput', false));
 
+javaaddpath(fullfile(echolex_src, '/lib/jar/mongo-java-driver.jar'))
 store = ExperimentReportsStore('master-thesis', 'experiments');
 g = gpuDevice;
 
 % If no display available, edit files with 'vim'
 setenv('EDITOR', 'vim');
 
-javaaddpath('/usr/local/MATLAB/R2016b/java/jar/mongo-java-driver-3.0.0.jar')

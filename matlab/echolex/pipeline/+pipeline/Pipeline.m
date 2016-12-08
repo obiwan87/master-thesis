@@ -86,23 +86,9 @@ classdef Pipeline < handle
             fprintf('\n');
         end
         
-        function plot(~)
-            %                         G.createGraph(previousNode);
-            %
-            %                         subgraphNodes = G.Nodes;
-            %                         outputs = outdegree(G.Graph, subgraphNodes);
-            %                         outputs = subgraphNodes(outputs==0);
-            %
-            %                         obj.Node = max(subgraphNodes) + 1;
-            %
-            %                         obj.Steps = [obj.Steps; G.Steps];
-            %                         obj.Steps(obj.Node) = s.createSelector(obj, G);
-            %
-            %                         subgraphOutputEdges = zeros(numel(outputs), 2);
-            %                         for k=1:numel(outputs)
-            %                             subgraphOutputEdges(k,:) = [outputs(k) obj.Node];
-            %                         end
-            %                         obj.Edges = [obj.Edges; G.Edges; subgraphOutputEdges];
+        function plot(obj)
+            renderer = pipeline.PipelineRenderer(obj);
+            plot(renderer);
         end
     end
     methods(Access=private)

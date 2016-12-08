@@ -7,7 +7,6 @@ classdef DocumentSet < handle
         Filename = '' % Source Filename
         T = [] % Documents
         V = [] % Vocabulary of Document Set
-        V_hash = [];
         I = [] % Document-Matrix with Words as indexes of V
         W = [] % Word-Count-Matrix
         TfIdf = []
@@ -71,7 +70,21 @@ classdef DocumentSet < handle
             e = cellfun(@isempty, V);
             V = V(~e);
             obj.V = V;
-            obj.V_hash = cellfun(@(x) hex2dec(DataHash(x)), V);
+        end
+        
+        function L = termLabels(obj)
+            if isempty(obj.I)
+                obj.terms2Indexes();                
+            end
+            
+            C = unique(obj.Y);
+            L = zeros(numel(obj.V), numel(C));
+            for i=1:numel(C)
+               c = C(i);
+               samples = obj.I(obj.Y == c);
+               t = unique(func.foldr(samples, [], @(x,y) [x y]));               
+               L(t,i) = 1;
+            end            
         end
         
         function W = wordCountMatrix(obj)
@@ -126,7 +139,7 @@ classdef DocumentSet < handle
             ED = obj.newFrom(ET);
         end
         
-        function ED = exlude_word_ids(obj, ids)
+        function ED = exclude_word_ids(obj, ids)
             EI = cellfun(@(s) s(arrayfun(@(w) ~any(w == ids), s)), obj.I, 'UniformOutput', false);
             ET = cellfun(@(s) obj.V(s)', EI, 'UniformOutput', false);
             ED = obj.newFrom(ET);

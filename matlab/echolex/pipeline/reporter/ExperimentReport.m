@@ -59,7 +59,7 @@ classdef ExperimentReport < handle
             r = struct();
             r.Name = shortclass(step);
             
-            r.Args = cellfun(@(x) ife(isa(x,'function_handle'), str(x), x), step.Args, 'UniformOutput', false);
+            r.Args = cellfun(@(x) ife(x, @(x) isa(x,'function_handle'), @str, @(x) x), step.Args, 'UniformOutput', false);
             r.Args = varargin2struct(r.Args{:});
             r.Duration = duration;
             r.PathNr = pathNr;
@@ -70,7 +70,7 @@ classdef ExperimentReport < handle
             end
             
             if strfind(class(step), 'Classifier')
-                r.Out = out;
+                r.Out = out.Out;
             end
             
             if ~isempty(obj.scheme)

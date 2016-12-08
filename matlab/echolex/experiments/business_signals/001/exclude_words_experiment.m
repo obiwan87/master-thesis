@@ -24,7 +24,7 @@ for i=1:numel(Ws)
     
     p{end+1} = fork(g); %#ok<*SAGROW>
     p{end+1} = TfIdf();
-    p{end+1} = SVMClassifier('KFold', 10);
+    p{end+1} = SVMClassifier('KFold', 30);
     P = pipeline(p);
     
     disp(dataset);

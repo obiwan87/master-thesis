@@ -1,20 +1,20 @@
 % h = figure;
-% 
+%
 % for i = 1:numel(R1.Sessions)
 %     session = R1.Sessions{i};
 %     report = session.Report;
-%     
+%
 %     lfgosses = [losses.Out];
 %     losses = [losses.loss];
-%     
+%
 %     losses = losses(1:end);
-%     
+%
 %     subplot(ceil(sqrt(numel(R.Sessions))), ceil(sqrt(numel(R.Sessions))),i);
 %     plot(1-losses, '.-');
 %     xlabel('n / Min. Frequency of Words');
 %     ylabel('Classification Accuracy');
 %     title(session.Name);
-%     
+%
 % end
 
 % Retrieves classification loss for each dataset and combination of "exclude
@@ -29,9 +29,20 @@ n = numel(results);
 for i=1:n
     subplot(ceil(sqrt(n)), ceil(sqrt(n)), i);
     result = results(i);
-    plot(result.mincounts, result.losses);   
+    plot(result.mincounts, result.losses);
     xlabel('Min. Word Frequency')
     ylabel('Loss');
-
+    
     title(result.dataset);
 end
+p = {};
+
+% Create combinations of exclude words
+g = pgrid('ExcludeWords', 'MinCount', 1:5, 'MaxCount', Inf);
+
+p{end+1} = fork(g); %#ok<*SAGROW>
+p{end+1} = TfIdf();
+p{end+1} = SVMClassifier('KFold', 10);
+P = pipeline(p);
+figure;
+plot(P);

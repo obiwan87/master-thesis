@@ -4,17 +4,26 @@ classdef NoOperation < pipeline.AtomicPipelineStep
     
     properties
         Name
+        Output
     end
     
     methods
-        function obj = NoOperation(name)
+        function obj = NoOperation(name, output)
+            if nargin < 2
+                output = [];
+            end
             obj = obj@pipeline.AtomicPipelineStep('Name', name);
             obj.Name = name;
+            obj.Output = output;
         end
         
-        function out = doExecute(~, ~, args)
-            in = args.Input;
-            out = struct('Out', in);
+        function out = doExecute(obj, ~, args)
+            if isempty(obj.Output)
+                out = args.Input;
+            else
+                out = obj.Output;
+            end
+            out = struct('Out', out);
         end
     end
     

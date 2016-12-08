@@ -6,32 +6,54 @@ classdef SVMClassifier < pipeline.classification.Classifier
         SVMParams
     end
     
+    properties(Hidden)
+        predictions = {};
+    end
+    
     methods
         function obj = SVMClassifier(varargin)
             obj = obj@pipeline.classification.Classifier(varargin{:});
-            obj.SVMParams = varargin;
             obj.SaveOutput = true;
         end
         
         function r = doExecute(obj, ~, args)
             dlp = args.DataLabelProvider;
+            
+            params = varargin2struct(obj.Args{:});
+            
+            if sum(strcmp('repeat', fieldnames(params))) > 0
+                repeat = params.repeat;
+            else
+                repeat = 1;
+            end
+            
             % For reproducibility, set default seed
             rng default
-            svmmodel = fitcsvm(dlp.Data, dlp.Labels, obj.SVMParams{:});
-            loss = kfoldLoss(svmmodel);
-            r = struct();
-            r.Out = struct('loss', loss, 'meanAccuracy', 1-loss);
+            r = struct();            
+            losses = zeros(repeat,1);
+            %obj.predictions = zeros(repeat, size(dlp.Data,1));
+            for i = 1:repeat
+                c = cvpartition(dlp.Labels, params.svmparams{:});
+                svmmodel = fitcsvm(dlp.Data, dlp.Labels, 'CVPartition', c);
+                lfcn = @(Y, Yfit, W, cost) obj.lossfun(Y, Yfit, W, cost);
+                
+                loss = kfoldLoss(svmmodel, 'mode', 'average', 'lossfun', lfcn);
+                classes = unique(dlp.Labels);
+                
+                %obj.predictions(i,:) = classes(obj.predictions(obj.predictions > 0));
+                losses(i) = loss;
+            end
+            r.Out = struct();
+            r.Out.loss = loss;
+            if repeat > 1                
+                r.Out.losses = losses;
+                r.Out.accuracies = 1-losses;
+                
+                r.Out.loss = mean(losses);
+            end
+            r.Out.accuracy = 1 - r.Out.loss;
+            r.ClassificationResults = obj.predictions;
             
-            
-            %            trainedModels = svmmodel.Trained;            
-            %             accuracies = zeros(numel(trainedModels), 1);
-            %             for i=1:numel(trainedModels)
-            %                 trainedModel = trainedModels{i};
-            %                 tii = test(svmmodel.Partition, i);
-            %                 predictions = predict(trainedModel, args.Data(tii,:));
-            %
-            %                 accuracies(i) = sum(predictions == args.Labels(tii))/sum(tii);
-            %             end
             
             % Loss and Accuracy are equivalent (accuracy = 1 - loss)
             % in binary classification.
@@ -39,10 +61,24 @@ classdef SVMClassifier < pipeline.classification.Classifier
     end
     
     methods(Access=protected)
-        function config(~, ~)
+        function e = lossfun(obj, C, Sfit, W, ~)
             
+            if size(C,2)==1
+                e = 0;
+                return;
+            end
+            
+            % Classification error is the fraction of incorrect predictions
+            notNaN = ~all(isnan(Sfit),2);
+            [~,y] = max(C(notNaN,:),[],2);
+            [~,yfit] = max(Sfit(notNaN,:),[],2);
+            W = W(notNaN,:);
+            e = sum((y~=yfit).*W) / sum(W);
+            
+            %obj.predictions(notNaN) = yfit;
         end
     end
     
 end
+
 

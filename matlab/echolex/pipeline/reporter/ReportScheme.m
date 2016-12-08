@@ -42,7 +42,7 @@ classdef ReportScheme < handle
                        s = val;
                     end
                     
-                    if ~found
+                    if found
                         r.(varname) = val;
                     end
                 end                                

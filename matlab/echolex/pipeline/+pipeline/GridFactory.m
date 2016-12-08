@@ -7,7 +7,17 @@ classdef GridFactory < handle
     
     methods(Static)
         function grid = createGrid(step, varargin)
-            parameterGrid = allcomb(varargin{2:2:end});
+            args = cell(numel(varargin)/2, 1);
+            for i=1:numel(args)
+                v = varargin{2*i};
+                if isnumeric(v) && ~iscell(v)
+                    args{i} = num2cell(varargin{2*i});
+                else
+                    args{i} = varargin{2*i};
+                end
+            end
+            
+            parameterGrid = allcomb(args{:});
             
             if isnumeric(parameterGrid)
                 parameterGrid = num2cell(parameterGrid);

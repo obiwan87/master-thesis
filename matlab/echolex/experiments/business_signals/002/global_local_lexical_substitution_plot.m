@@ -12,50 +12,50 @@ for i=1:numel(globalLexSubResults)
     for j=1:numel(s.dataset)
         features = s.features{j};
         ns = noPreprocessingResults(j);
-        subplot(ceil(sqrt(N)), ceil(sqrt(N)), j);   
+        subplot(ceil(sqrt(N)), ceil(sqrt(N)), j);
         hold on
+        
+        % Bar Graph of losses with GKLS
+        idxs = (3*(j-1) + 1):3*j;
+        losses = s.loss(idxs,:)';
+        k = s.k(idxs,:);
+        bar(losses);
+        ax = gca;
+        ax.YLim = [0 0.3];
+        ax.XTick = 1:numel(unique(k));
+        ax.XTickLabel = unique(k);
+        ax.XLim = [0 numel(unique(k))+1];
+        % Line Plots of losses without LexSub
         for k=1:numel(features)
-            loss = s.loss(j*k,:);
-            K = s.k(j*k,:);            
-            plot(K, loss);
-            ax = gca;
-            ax.XLim = [min(K) max(K)];
             plot(ax.XLim, [ns.loss(k) ns.loss(k)]);
         end
-
-        title(s.dataset{j});
+        xlabel('K / Nearest Neighbors');
+        ylabel('Loss');
+        
+        dataset = s.dataset{j};
+        dataset(1) = upper(dataset(1));
+        title(dataset);
         if j==numel(s.dataset)
-            legend(features);
+            legend({features{:} features{:}});
         end
     end
 end
 
-% sigmas = unique({globalLexSubResults.sigma});
-% 
-% for i=1:numel(sigmas)
-%     sigma = sigmas{i};
-%     
-%     gs = globalLexSubResults(strcmp(sigma, {globalLexSubResults.sigma}));
-%     
-%     figure;
-%     n = numel(gs);
-%     for j=1:numel(gs)        
-%         result = gs(j);
-%         ii = strcmp(gs(j).dataset, {noPreprocessingResults.dataset});        
-%         ns = noPreprocessingResults(ii);
-%         
-%         subplot(ceil(sqrt(n)), ceil(sqrt(n)), j);
-%         
-%         [K, ii] = sort(result.k);
-%         losses = result.losses;
-%         losses = losses(ii);
-%                 
-%         plot(K, losses);
-%         hold on
-%         ax = gca;
-%         plot(ax.XLim, [ns.loss ns.loss]);
-%         ylabel('Loss');
-%         xlabel('K / Nearest Neighbors');
-%         title(result.dataset);
-%     end
-% end
+p = sequence(  ...
+    select(@(s) mini(cellfun(@(y) y.Out.loss, s)), ...
+    sequence(fork(grid('ExcludeWords', 'MinCount', num2cell(1:3), 'MaxCount', {Inf})), ...
+    TfIdf(), ...
+    SVMClassifier('KFold', 10) )), ...
+    fork(nop(), ...
+    sequence(LocalLexicalKnnSubstitution('K', 10, 'MaxIter', 10, 'DictDeltaThresh', 10), nop()), ...
+    sequence( ...
+    fork(grid('GlobalLexicalKnnSubstitution', 'K', num2cell([150, 100, 50, 30, 20]), 'sigma', {@(x,y,z) (x+y), @(x,y,z) (x+y)./exp(1.3*z)})), ...
+    fork(nop(),LocalLexicalKnnSubstitution('K', 10, 'MaxIter', 10, 'DictDeltaThresh', 10)))), ...
+    fork(TfIdf(), WordCountMatrix(), TfIdfVectorizer()), ...
+    SVMClassifier('KFold', 10));
+
+h = figure;
+h.Name = 'Global/Lexical  KNN-Substitution';
+
+P = pipeline(p);
+plot(P);
