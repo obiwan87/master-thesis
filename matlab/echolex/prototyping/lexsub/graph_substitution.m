@@ -14,6 +14,8 @@ while i <= iterations
     % Replace node in graph
     % Update frequencies
     C = conncomp(ld, 'Type', 'weak'); %How does 'Type' affect substitutions?
+    % ^ It probably doesnt. It just speeds up computation since distances
+    % can be computed with bigger batches
     cs = unique(C);
 
     freq = ld.Nodes.Frequency';

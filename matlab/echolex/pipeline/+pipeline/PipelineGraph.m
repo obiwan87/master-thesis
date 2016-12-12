@@ -105,8 +105,6 @@ classdef PipelineGraph < handle
                 obj.pushNode(currentNode);
                 S = F.Children{i}.asSequence();
                 obj.sequence(S);
-                
-                fprintf('*\n');
             end
         end
         

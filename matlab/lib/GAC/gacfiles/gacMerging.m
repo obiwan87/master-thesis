@@ -35,7 +35,13 @@ end
 
 numClusters = length(initClusters);
 if numClusters <= groupNumber
-    error('GAC: too few initial clusters. Do not need merging!');
+    warning('GAC: too few initial clusters. Do not need merging!');
+    %% generate sample labels
+    clusterLabels = ones(numSample,1);
+    for i = 1:length(initClusters)
+        clusterLabels(initClusters{i}) = i;
+    end
+    return
 end
 
 %% compute the structural complexity of each initial cluster

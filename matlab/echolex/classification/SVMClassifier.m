@@ -3,7 +3,8 @@ classdef SVMClassifier < pipeline.classification.Classifier
     %   Detailed explanation goes here
     
     properties
-        SVMParams
+        CrossvalParams
+        Repeat
     end
     
     properties(Hidden)
@@ -18,34 +19,27 @@ classdef SVMClassifier < pipeline.classification.Classifier
         
         function r = doExecute(obj, ~, args)
             dlp = args.DataLabelProvider;
-            
-            params = varargin2struct(obj.Args{:});
-            
-            if sum(strcmp('repeat', fieldnames(params))) > 0
-                repeat = params.repeat;
-            else
-                repeat = 1;
-            end
+           
+            repeat = obj.Repeat;
             
             % For reproducibility, set default seed
             rng default
-            r = struct();            
+            r = struct();
             losses = zeros(repeat,1);
             %obj.predictions = zeros(repeat, size(dlp.Data,1));
             for i = 1:repeat
-                c = cvpartition(dlp.Labels, params.svmparams{:});
+                c = cvpartition(dlp.Labels, obj.CrossvalParams{:});
                 svmmodel = fitcsvm(dlp.Data, dlp.Labels, 'CVPartition', c);
                 lfcn = @(Y, Yfit, W, cost) obj.lossfun(Y, Yfit, W, cost);
                 
                 loss = kfoldLoss(svmmodel, 'mode', 'average', 'lossfun', lfcn);
-                classes = unique(dlp.Labels);
-                
+                %classes = unique(dlp.Labels);
                 %obj.predictions(i,:) = classes(obj.predictions(obj.predictions > 0));
                 losses(i) = loss;
             end
             r.Out = struct();
             r.Out.loss = loss;
-            if repeat > 1                
+            if repeat > 1
                 r.Out.losses = losses;
                 r.Out.accuracies = 1-losses;
                 
@@ -61,6 +55,7 @@ classdef SVMClassifier < pipeline.classification.Classifier
     end
     
     methods(Access=protected)
+        % TODO: Finish
         function e = lossfun(obj, C, Sfit, W, ~)
             
             if size(C,2)==1
@@ -76,6 +71,34 @@ classdef SVMClassifier < pipeline.classification.Classifier
             e = sum((y~=yfit).*W) / sum(W);
             
             %obj.predictions(notNaN) = yfit;
+        end
+        
+        
+    end
+    
+    methods(Access=protected)
+        function p = createConfigurationInputParser(obj)
+            p = createConfigurationInputParser@pipeline.AtomicPipelineStep(obj);
+            
+            % Algorithm Parameters
+            addParameter(p, 'CrossvalParams', {'kfold', 10}, @iscell);
+            addParameter(p, 'Repeat', 1, @is_pos_integer);
+            
+            function b = is_pos_integer(x)
+                b = isscalar(x) && x >= 1 && floor(x) == x;
+            end
+        end
+        
+        function p = createPipelineInputParser(obj)
+            p = createPipelineInputParser@pipeline.classification.Classifier(obj);
+            addRequired(p, 'DataLabelProvider', @(x) isa(x, 'pipeline.io.DataProvider') && isa(x, 'pipeline.io.LabelProvider') );
+        end
+        
+        function config(obj, args)
+            config@pipeline.AtomicPipelineStep(obj, args)
+            
+            obj.CrossvalParams = args.CrossvalParams;
+            obj.Repeat = args.Repeat;
         end
     end
     
