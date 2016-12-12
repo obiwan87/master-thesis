@@ -6,7 +6,7 @@ W = Ws{strcmp(dataset, business_signals)};
 
 report = ExperimentReport(experiment_id, dataset, name, description);
 
-p = sequence(fork(pgrid('ExcludeWords', 'MinCount', 1:5, 'MaxCount', Inf)), fork(TfIdf(), TfIdfVectorizer()), SVMClassifier('SVMParams', {'kfold', 10}));
+p = sequence(fork(pgrid('ExcludeWords', 'MinCount', 1:5, 'MaxCount', Inf)), fork(TfIdf(), TfIdfVectorizer()), SVMClassifier('CrossvalParams', {'kfold', 10}));
 P = pipeline(p);
 
 P.execute(W, report);

@@ -14,8 +14,6 @@ classdef Classifier < pipeline.AtomicPipelineStep
     methods(Access=protected)
         function p = createPipelineInputParser(obj)
             p = createPipelineInputParser@pipeline.AtomicPipelineStep(obj);
-            
-            addRequired(p, 'DataLabelProvider', @(x) isa(x, 'pipeline.io.DataProvider') && isa(x, 'pipeline.io.LabelProvider') );
         end
         
     end

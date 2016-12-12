@@ -18,7 +18,7 @@ for i=1:numel(Ws)
                        fork(pgrid('GlobalLexicalKnnSubstitution', 'K', num2cell([150, 100, 50, 30, 20]), 'sigma', {@(x,y,z) (x+y), @(x,y,z) (x+y)./exp(1.3*z)})), ...
                        fork(nop(),LocalLexicalKnnSubstitution('K', 10, 'MaxIter', 10, 'DictDeltaThresh', 10)))), ...
         fork(TfIdf(), WordCountMatrix(), TfIdfVectorizer()), ...
-        SVMClassifier('KFold', 10));
+        SVMClassifier('CrossvalParams', {'KFold', 10}));
     
     dataset = business_signals{i};
     r = ExperimentReport(experiment_id, dataset, name, 'Lexical Substitution', scheme);
@@ -26,5 +26,5 @@ for i=1:numel(Ws)
     figure; plot(P.Graph);
     P.execute(W, r);
     
-    store.add(r);
+    %store.add(r);
 end

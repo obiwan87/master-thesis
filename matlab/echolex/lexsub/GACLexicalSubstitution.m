@@ -3,15 +3,40 @@ classdef GACLexicalSubstitution < LexicalSubstitutionPreprocessor
     %   Detailed explanation goes here
     
     properties
-        
+        K
+        StructuralDescriptor
+        GroupNumber
+        p
+        a
+        z
     end
     
     methods
-        function obj = GACLexicalSubstitution()
-            obj = obj@LexicalSubstitutionPreprocessor();
+        function obj = GACLexicalSubstitution(varargin)
+            obj = obj@LexicalSubstitutionPreprocessor(varargin{:});
         end
         
-        function r = doExecute(obj, context, args)
+        function r = doExecute(obj, ~, args)
+            W = args.Word2VecDocumentSet;
+            A = double(squareform(pdist( W.m.X(W.Vi,:),'cosine')));
+            
+            clusteredLabels  = gacCluster(A, obj.GroupNumber, obj.StructuralDescriptor, obj.K, obj.a, obj.z);
+            
+            F = W.termFrequencies().Frequency;
+            clusters = unique(clusteredLabels);
+            substitutes = zeros(numel(clusters),1);
+            for i=1:numel(clusters)           
+                samples = find(clusteredLabels == clusters(i));
+                substitute = samples(maxi(F(samples)));
+                substitutes(i) = substitute;                
+            end
+            
+            LI = cellfun(@(x) substitutes(clusteredLabels(x)), W.I, 'UniformOutput', false);
+            LT = cellfun(@(x) W.V(x)', LI, 'UniformOutput', false);
+            
+            LW = io.Word2VecDocumentSet(W.m, LT, W.Y);
+            
+            r = struct('Out', LW);
         end
     end
     
@@ -28,6 +53,7 @@ classdef GACLexicalSubstitution < LexicalSubstitutionPreprocessor
             
             % Algorithm Parameters
             addParameter(p, 'K', 10, @is_pos_integer);
+            addParameter(p, 'GroupNumber', 100, @is_pos_integer);
             addParameter(p, 'StructuralDescriptor', 'path', @(x) ischar(x) && (strcmp(x, 'zeta') || strcmp(x, 'path')) );
             addParameter(p, 'p', 1, @is_pos_integer);
             addParameter(p, 'a', true, @islogical);
@@ -43,8 +69,11 @@ classdef GACLexicalSubstitution < LexicalSubstitutionPreprocessor
             config@pipeline.AtomicPipelineStep(obj, args);
             
             obj.K = args.K;
-            obj.DictDeltaThresh = args.DictDeltaThresh;
-            obj.MaxIter = args.MaxIterations;
+            obj.StructuralDescriptor = args.StructuralDescriptor;
+            obj.GroupNumber = args.GroupNumber;
+            obj.p = args.p;
+            obj.a = args.a;
+            obj.z = args.z;
         end
     end
     

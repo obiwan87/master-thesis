@@ -44,6 +44,7 @@ classdef DocumentSet < handle
             
             I = cellfun(@(x) cellfun(@(y) find(strcmp(y,obj.V)), x), obj.T, 'UniformOutput', false);
             obj.I = I;
+            
         end
         
         function TfIdf = tfidf(obj)

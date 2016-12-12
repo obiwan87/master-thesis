@@ -20,6 +20,11 @@ classdef Pipeline < handle
         ExecutionPaths = {};
         CurrentExecutionPath = 1;
         CurrentStep
+        
+        %Verbose Output
+        Padding = 0
+        CharsWritten = 0
+        MaxChild = 0
     end
     
     methods
@@ -67,7 +72,21 @@ classdef Pipeline < handle
             for i=1:numel(children)
                 node = children(i);
                 step = obj.PGraph.Steps(node);
-                fprintf('-> %s', shortclass(step));
+                
+                % Just for debugging purposes and progress purposes
+                
+                if i > 1
+                    padding = repmat(' ', obj.Padding, 1);
+                else
+                    padding = '';
+                end
+                
+                output = sprintf('%s-> %s', padding, shortclass(step));
+                
+                previousPadding = obj.Padding;                
+                obj.Padding = obj.Padding + length(output);
+                
+                fprintf(output);
                 
                 start = tic;
                 out = step.execute(obj, input);                
@@ -82,8 +101,10 @@ classdef Pipeline < handle
                 end
 
                 obj.dfexec(node, out.Out, depth + 1);
+                
+                obj.Padding = previousPadding;
+                fprintf('\n');
             end
-            fprintf('\n');
         end
         
         function plot(obj)
