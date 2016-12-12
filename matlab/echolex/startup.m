@@ -11,7 +11,9 @@ business_signals = unique(cellfun(@(x) first(strsplit(x,'.')), {business_signals
 
 javaaddpath(fullfile(echolex_src, '/lib/jar/mongo-java-driver.jar'))
 store = ExperimentReportsStore('master-thesis', 'experiments');
-g = gpuDevice;
+if exist('gpuDevice', 'builtin')
+    g = gpuDevice;
+end
 
 % If no display available, edit files with 'vim'
 setenv('EDITOR', 'vim');
