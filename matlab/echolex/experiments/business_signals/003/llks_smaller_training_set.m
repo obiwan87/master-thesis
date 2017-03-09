@@ -14,7 +14,8 @@ p = sequence(...
 P = pipeline(p);
 figure; plot(P);
 for i=1:numel(datasets)
-    report = ExperimentReport(experiment_id, business_signals{datasets(i)}, name, description, scheme);
+    dataset = [business_signals{datasets(i)} '-bigrams'];
+    report = ExperimentReport(experiment_id, dataset, name, description, scheme);
     W = Ws{datasets(i)};
     P = pipeline(p);
     execute(P, W, report);

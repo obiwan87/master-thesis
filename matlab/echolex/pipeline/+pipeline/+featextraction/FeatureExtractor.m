@@ -1,12 +1,10 @@
 classdef (Abstract) FeatureExtractor < pipeline.AtomicPipelineStep
-    %FEATUREEXTRACTOR Summary of this class goes here
-    %   Detailed explanation goes here
+    %FEATUREEXTRACTOR Superclass of all feature extractors in pipeline
     
-    properties
-    end
-    
-    methods      
-    end
-
+    methods
+        function obj = FeatureExtractor(varargin)
+            obj  = obj@pipeline.AtomicPipelineStep(varargin{:});
+        end
+    end    
 end
 

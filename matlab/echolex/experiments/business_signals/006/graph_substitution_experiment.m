@@ -1,8 +1,8 @@
 experiment_id = 6;
 name = 'Lexical Graph Substitution';
-description = 'Compare LLKS/GLKS with Graph substitution approaches';
+description = 'Compare LLKS with Graph substitution approaches';
 
-crossvalParams = allcomb({'holdout'}, num2cell([0.5:0.1:0.9 0.95]));
+crossvalParams = allcomb({'holdout'}, num2cell([0.05 0.1:0.1:0.4]));
 crossvalParams = arrayfun(@(x) {crossvalParams{x,1}, crossvalParams{x,2}}, 1:size(crossvalParams,1), 'UniformOutput', false);
 datasets = 1:3;
 p = sequence( ... 

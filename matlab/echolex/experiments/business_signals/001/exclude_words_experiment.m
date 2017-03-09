@@ -20,7 +20,7 @@ for i=1:numel(Ws)
     p = {};
     
     % Create combinations of exclude words 
-    g = grid('ExcludeWords', 'MinCount', 1:5, 'MaxCount', Inf);
+    g = pgrid('ExcludeWords', 'MinCount', 1:5, 'MaxCount', Inf);
     
     p{end+1} = fork(g); %#ok<*SAGROW>
     p{end+1} = TfIdf();

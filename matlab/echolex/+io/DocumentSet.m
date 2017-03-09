@@ -60,9 +60,16 @@ classdef DocumentSet < handle
                 obj.extractVocabulary()
             end
             
-            F = func.foldr(obj.T, [], @(x,y) [x y]);
-            F = cellfun(@(x) sum(strcmp(x,F)), obj.V);
-            F = table(obj.V, F, 'VariableNames', {'Term', 'Frequency'});
+            if isempty(obj.W)
+                obj.wordCountMatrix();
+            end
+            w = obj.W;
+            f = full(sum(w));
+            w(w>0) = 1;
+            d = full(sum(w)); 
+            p = full(sum(w(obj.Y==1,:)));
+            n = d - p;
+            F = table(obj.V, f', d', p', n', 'VariableNames', {'Term', 'Frequency', 'Docs', 'PDocs', 'NDocs'});
         end
         
         function V = extractVocabulary(obj)
@@ -89,6 +96,11 @@ classdef DocumentSet < handle
         end
         
         function W = wordCountMatrix(obj)
+            
+            if nargin < 2
+                keepUnigrams = false;
+            end
+            
             if isempty(obj.I)
                 obj.terms2Indexes();
             end
@@ -103,8 +115,12 @@ classdef DocumentSet < handle
                 
                 W(i,M) = C; %#ok<SPRIX>
             end
-            
+           
             obj.W = W;
+        end
+        
+        function text = get_text(obj)
+            text = strjoin(cellfun(@(x) strjoin(x, ' '), obj.T, 'UniformOutput', false), '\n'); 
         end
         
         function D = filter_vocabulary(obj, minf, maxf, keep_n)

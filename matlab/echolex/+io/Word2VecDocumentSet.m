@@ -23,7 +23,12 @@ classdef Word2VecDocumentSet < io.DocumentSet
     methods(Access=protected)
         function calculateTermsMapping(obj)
             obj.extractVocabulary();
-            [~, obj.Vi, ~] = intersect(obj.m.Terms, obj.V);
+            obj.Vi = zeros(numel(obj.V), 1);
+            [~,a,b] = intersect(lower(string(obj.V)),lower(string(obj.m.Terms)));
+            obj.Vi(a) = b;
+            
+            [~,a,b] = intersect(obj.V,obj.m.Terms);
+            obj.Vi(a) = b;
         end
     end
 end

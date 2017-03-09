@@ -9,7 +9,8 @@ for i=1:numel(results)
     holdout = results(i).holdout;
     for j=1:numel(results(i).preprocessor)
         loss = results(i).loss(j,:);
-        plot(holdout, loss);
+        ii = sorti(holdout);
+        plot(holdout(ii), 1-loss(ii));
         xlabel('Holdout');
         ylabel('Loss');
         dataset = results(i).dataset;

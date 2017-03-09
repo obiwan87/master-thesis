@@ -13,6 +13,9 @@ javaaddpath(fullfile(echolex_src, '/lib/jar/mongo-java-driver.jar'))
 store = ExperimentReportsStore('master-thesis', 'experiments');
 g = gpuDevice;
 
+% Python path
+insert(py.sys.path, int32(0), fullfile(echolex_src, 'python'));
+
 % If no display available, edit files with 'vim'
 setenv('EDITOR', 'vim');
 
