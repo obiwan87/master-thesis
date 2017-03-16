@@ -96,9 +96,9 @@ classdef LocalLexicalKnnSubstitution < LexicalSubstitutionPreprocessor
                 end
                 dictSizeBefore = dictSize;
                 dictSize = numel(unique(LVi(:,k+1)));
-                d = abs(dictSizeBefore - dictSize)
+                d = abs(dictSizeBefore - dictSize);
                 
-                k = k + 1
+                k = k + 1;
             end
             
             LVi = LVi(:,2:k); % Trim results in case we stopped earlier than MaxIter iterations
