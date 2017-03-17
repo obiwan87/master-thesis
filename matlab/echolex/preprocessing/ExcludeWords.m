@@ -30,7 +30,7 @@ classdef ExcludeWords < pipeline.preprocessing.Preprocessor
             p = createConfigurationInputParser@pipeline.AtomicPipelineStep(obj);
             
             addParameter(p, 'MinCount', 2, @isscalar);
-            addParameter(p, 'MaxCount', 100, @isscalar);
+            addParameter(p, 'MaxCount', Inf, @isscalar);
             addParameter(p, 'KeepN', Inf, @isscalar);
         end
         

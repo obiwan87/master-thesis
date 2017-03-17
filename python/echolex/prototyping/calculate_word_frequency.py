@@ -1,14 +1,5 @@
 import csv
 
-import nltk
-import re
-
-import numpy as np
-from gensim.models import Word2Vec
-from nltk.corpus import stopwords
-
-from utils.utils import replace_umlauts, Timer
-
 wordfrequencies = {}
 
 with open('/media/echobot/Volume/home/simon/uni/masterarbeit/data/de/corpus/news.2013.de.shuffled.corpus.bigram') as f:

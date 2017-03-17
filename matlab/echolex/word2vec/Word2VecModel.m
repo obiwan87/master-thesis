@@ -33,7 +33,7 @@ classdef Word2VecModel < handle
             [idx, d] = knnsearch(obj.X, v, 'K', K, 'distance', ...
                 'cosine');
             
-            T = table(obj.Terms(idx), d', 'VariableNames', {'word', 'distance'});
+            T = table(obj.Terms(idx), 1-d', 'VariableNames', {'word', 'distance'});
             if nargout <= 0
                 T %#ok<NOPRT>
             end
@@ -92,7 +92,7 @@ classdef Word2VecModel < handle
             [coeff, ~] = pca(D);
             
             d = double(D * coeff(:,1:2));
-            figure; 
+            figure;
             scatter(d(1:end,1), d(1:end,2), '.w');
             hold on
             
@@ -140,6 +140,17 @@ classdef Word2VecModel < handle
             end
             hold off
             
+        end
+        
+        function s = similarity(obj, w1, w2)
+            v1 = obj.vector(w1);
+            v2 = obj.vector(w2);
+            
+            if ~isempty(v1) && ~isempty(v2)
+                s = 1 - pdist([v1; v2], 'cosine');
+            else
+                s = single(-1);
+            end
         end
     end
     

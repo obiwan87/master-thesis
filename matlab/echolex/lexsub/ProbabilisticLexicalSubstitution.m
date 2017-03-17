@@ -31,27 +31,24 @@ classdef ProbabilisticLexicalSubstitution < LexicalSubstitutionPreprocessor
             
             TF = D.termFrequencies();
             
-            F = TF.Frequency;
             F = TF.Frequency(D.Vi~=0,:);
             
             %% Step 1: Look for substitution candidates
             % WARNING: You're entering an index jungle %
             
-            while k <= obj.MaxIter
-                
+            while k <= obj.MaxIter                
                 [uV, ~, uVb] = unique(LVi(:,k));
                 
                 Fu = F(uV);
                 
-                %                  LVi                   uV            
-                % word2vec indices <-> document indices <-> NNs indices
-                
+                %                  LVi                   uV
+                % word2vec indices <-> document indices <-> NNs indices                
                 wii = Vi(uV); %word2vec indices
                 
                 ref = D.m.X(wii,:); % reference subset of model
                 query = D.m.X(wii,:); % query subset of model
-                [nns, distances] = knnsearch(ref,query,'k', obj.K,'distance', 'cosine');
-                probs = 1 - distances; % Interpret distances as probabilities p(w1|w2)
+                [nns, dists] = knnsearch(ref,query,'k', obj.K,'distance', 'cosine');
+                probs = 1 - dists; % Interpret distances as probabilities p(w1|w2)
                 clear distances
                 for i=1:size(uV,1)
                     j = uV(i);
@@ -59,7 +56,7 @@ classdef ProbabilisticLexicalSubstitution < LexicalSubstitutionPreprocessor
                     f = Fu(nns(i,:)); % Frequencies of NNs of word w
                     
                     % Should we even consider a substitution?
-                    if f(1) <= obj.SubstitutionThreshold                                             
+                    if f(1) <= obj.SubstitutionThreshold
                         % Substitute only if p(w|D) <= p(w|s) * p(s|D)
                         P = probs(i,:)';
                         p = f .* P;
@@ -101,29 +98,52 @@ classdef ProbabilisticLexicalSubstitution < LexicalSubstitutionPreprocessor
                         snodes = find(cs(i) == C);
                         tg = subgraph(sd, snodes);
                         [~,iA] = intersect(uV, snodes);
-                        % These are the words that are not the
-                        % target substitution of any other word
-                        startNodes = find(indegree(tg) == 0 & outdegree(tg) > 0);
-                        for j=1:numel(startNodes)
-                            s = startNodes(j);
+                        
+                        % All nodes in this connected component
+                        N = 1:numnodes(tg);
+                        
+                        % Navigate the graph one layer at a time
+                        % A layer is the defined as
+                        % L_j = {n \in TG.V | distance(n, root) = j };
+                        % j = 1,...,J_max
+                        
+                        pathLengths = distances(tg, N, find(outdegree(tg) == 0));
+                        [pathLengths, ii] = sort(pathLengths,'descend');
+                        N = N(ii);
+                        
+                        % We to substitute words according to their
+                        % frequencies before any substitution from the
+                        % previous Layer.
+                        
+                        Fu_temp = Fu;
+                        
+                        L = pathLengths(1);
+                        for kk=1:numel(N)
+                            if L > pathLengths(kk)
+                                %commit changes to frequency
+                                Fu = Fu_temp;
+                                L = pathLengths(kk);
+                            end
                             
-                            pred = s;
-                            succ = successors(tg, s);
-                            succ = succ(1);
+                            % Iterate through the sequence of substitutions
+                            current = N(kk);
+                            succ = successors(tg, current);
+                            assert(numel(succ) <= 1);
                             
-                            % Currently DFS                            
-                            while ~isempty(succ)
-                                % Iterate through the sequence of substitutions
-                                succ = succ(1);
+                            if ~isempty(succ)
+                                d = 1 - pdist(ref(iA([current succ]),:),'cosine');
+                                fprintf('%s (%.2f)|----%.2f---->|%s (%.2f) ', D.m.Terms{Vi(iA(current))}, Fu(iA(current)), d, D.m.Terms{Vi(iA(succ))}, Fu(iA(succ)));
                                 
-                                d = 1 - pdist(ref(iA([pred succ]),:),'cosine');
-                                
-                                % Update frequency
-                                Fu(iA(succ)) = d*Fu(iA(pred)) + Fu(iA(succ));
-                                Fu(iA(pred)) = 0;
-                                
-                                pred = succ;
-                                succ = successors(tg, succ);
+                                if Fu(iA(succ)) * d > Fu(iA(current))
+                                    % Update frequency
+                                    Fu_temp(iA(succ)) = d*Fu_temp(iA(current)) + Fu_temp(iA(succ));
+                                    Fu_temp(iA(current)) = 0;
+                                    LVi( LVi(:,k+1) == snodes(current),k+1) = snodes(succ);
+                                    fprintf(' (s) ')
+                                else
+                                    fprintf(' (x) ')
+                                end
+                                fprintf('\n');                                
                             end
                         end
                         
@@ -132,7 +152,8 @@ classdef ProbabilisticLexicalSubstitution < LexicalSubstitutionPreprocessor
                 end
                 F(uV) = Fu;
                 k = k + 1;
-            end            
+                %LVi(:,k+1) = LVi(:,k); % copy to next iteration
+            end
             %% Step 3: Substitute terms and create new corpus
             
             nZ = find(D.Vi ~= 0);
@@ -145,7 +166,7 @@ classdef ProbabilisticLexicalSubstitution < LexicalSubstitutionPreprocessor
             LD.tfidf();
             
             r = struct('Out', LD);
-            info = struct(); 
+            info = struct();
             info.vocSizeBefore = numel(D.V);
             info.vocSizeAfter = numel(LD.V);
             info.S = S;
