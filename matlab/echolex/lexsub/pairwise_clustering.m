@@ -17,7 +17,11 @@ b = params.ScoreFunctionParam2;
 m = D.m;
 
 % Unigrams
-w2v_u_i = D.Vi(~D.B);
+if ~isempty(D.B)
+    w2v_u_i = D.Vi(~D.B);
+else 
+    w2v_u_i = D.Vi;
+end
 w2v_u_i = w2v_u_i(w2v_u_i~=0);
 
 dist_u = double(squareform(pdist(m.X(w2v_u_i,:),'cosine')));
@@ -27,6 +31,7 @@ dist_u(dist_u > 1) = 1;
 F = D.termFrequencies();
 F_u = F(~D.B & D.Vi ~= 0,:);
 
+% Calculate likelihood of model if pairwise substituting each word
 K = F_u.PDocs + 1;
 N = K + F_u.NDocs + 1;
 P = K./N;
@@ -40,6 +45,7 @@ P_ = k./n;
 L_ = P_.^k.*(1-P_).^(n-k);
 pL_ = L_ ./ (L + L_);
 dist_p = scoreFunction(pL_,dist_u,a,b);
+dist_p(isnan(dist_p)) = 1; %shouldnt be necessary
 dist_p = double(~logical(eye(size(dist_p)))) .* dist_p;
 
 Z = linkage(squareform(dist_p), linkage_param);
@@ -125,22 +131,22 @@ end
 
 % tic
 % for i=1:size(dist_u,1)
-%     
+%
 %     % Frequencies of current word
 %     k = K(i);
 %     n = N(i);
-%     
+%
 %     % Max. joint likelihood
 %     L12 = L(i) * L;
-%     
+%
 %     % Probability of new model (after substitution)
 %     P_ = (k + K)./(n + N);
-%     
+%
 %     % Likelihood of merged model
 %     L_ = P_.^(k+K).*(1-P_).^(n-k+N-K);
-%     
+%
 %     pL_ = L_ ./ (L12 + L_);
-%     
+%
 %     dist_p(i,:) = scoreFunction(pL_', dist_u(i,:),a,b);
 % end
 % toc

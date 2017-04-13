@@ -9,32 +9,39 @@ classdef DocumentSet < handle
         V = [] % Vocabulary of Document Set
         I = [] % Document-Matrix with Words as indexes of V
         W = [] % Word-Count-Matrix
+        B = [] % Bigrams: Indicates whether v \in V is a bigram
         TfIdf = []
         EmptyLines = [];
         Y = []
-    end    
+    end
     
     methods
-        function obj = DocumentSet(s, labels)
+        function obj = DocumentSet(s, labels, empty)
             if nargin < 2
                 labels = [];
             end
             
-            if ischar(s)
-                obj.Filename = s;
-                obj.read();
-            elseif iscell(s)
-                obj.T = s;
-                e = cellfun(@(x) isempty(x), obj.T);
-                if sum(e) > 0
-                    warning('%d empty documents', sum(e));
-                    obj.T = obj.T(~e);
-                    obj.EmptyLines = find(e);
-                end
+            if nargin < 3
+                empty = false;
             end
             
-            obj.Y = labels;
-            obj.Y(obj.EmptyLines) = [];
+            if ~empty
+                if ischar(s)
+                    obj.Filename = s;
+                    obj.read();
+                elseif iscell(s)
+                    obj.T = s;
+                    e = cellfun(@(x) isempty(x), obj.T);
+                    if sum(e) > 0
+                        warning('%d empty documents', sum(e));
+                        obj.T = obj.T(~e);
+                        obj.EmptyLines = find(e);
+                    end
+                end
+                
+                obj.Y = labels;
+                obj.Y(obj.EmptyLines) = [];
+            end
         end
         
         function I = terms2Indexes(obj)
@@ -45,6 +52,17 @@ classdef DocumentSet < handle
             I = cellfun(@(x) cellfun(@(y) find(strcmp(y,obj.V)), x), obj.T, 'UniformOutput', false);
             obj.I = I;
             
+        end
+        
+        function prepare(obj)
+            obj.tfidf();
+            obj.findBigrams();
+        end
+        
+        function B = findBigrams(obj)            
+            bigrams_ = cellfun(@(x) strsplit(x, '_'), obj.V, 'UniformOutput', false);
+            B = cellfun(@(x) numel(x) == 2, bigrams_);            
+            obj.B = B;
         end
         
         function TfIdf = tfidf(obj)
@@ -66,7 +84,7 @@ classdef DocumentSet < handle
             w = obj.W;
             f = full(sum(w));
             w(w>0) = 1;
-            d = full(sum(w)); 
+            d = full(sum(w));
             p = full(sum(w(obj.Y==1,:)));
             n = d - p;
             F = table(obj.V, f', d', p', n', 'VariableNames', {'Term', 'Frequency', 'Docs', 'PDocs', 'NDocs'});
@@ -82,17 +100,17 @@ classdef DocumentSet < handle
         
         function L = termLabels(obj)
             if isempty(obj.I)
-                obj.terms2Indexes();                
+                obj.terms2Indexes();
             end
             
             C = unique(obj.Y);
             L = zeros(numel(obj.V), numel(C));
             for i=1:numel(C)
-               c = C(i);
-               samples = obj.I(obj.Y == c);
-               t = unique(func.foldr(samples, [], @(x,y) [x y]));               
-               L(t,i) = 1;
-            end            
+                c = C(i);
+                samples = obj.I(obj.Y == c);
+                t = unique(func.foldr(samples, [], @(x,y) [x y]));
+                L(t,i) = 1;
+            end
         end
         
         function W = wordCountMatrix(obj)
@@ -115,12 +133,12 @@ classdef DocumentSet < handle
                 
                 W(i,M) = C; %#ok<SPRIX>
             end
-           
+            
             obj.W = W;
         end
         
         function text = get_text(obj)
-            text = strjoin(cellfun(@(x) strjoin(x, ' '), obj.T, 'UniformOutput', false), '\n'); 
+            text = strjoin(cellfun(@(x) strjoin(x, ' '), obj.T, 'UniformOutput', false), '\n');
         end
         
         function D = filter_vocabulary(obj, minf, maxf, keep_n)
@@ -172,8 +190,12 @@ classdef DocumentSet < handle
             i = find(strcmp(word, obj.V));
         end
         
-        function N = newFrom(obj, T)
-            N = io.DocumentSet(T, obj.Y);
+        function N = newFrom(obj, T, Y)
+            if nargin < 3
+                Y = obj.Y;
+            end
+            
+            N = io.DocumentSet(T, Y);
         end
         
         function c = compact(obj)
@@ -182,6 +204,30 @@ classdef DocumentSet < handle
             c.I = obj.I;
             c.T = [];
             c.Y = [];
+        end
+        
+        function sD = applySubstitution(obj, substitutionMap)
+            
+            sV = cell(size(obj.V));
+            for i=1:numel(obj.V)
+                if substitutionMap.isKey(obj.V{i})
+                    sV{i} = substitutionMap(obj.V{i});
+                else 
+                    sV{i} = obj.V{i};
+                end
+                
+                %fprintf('%s -> %s \n', obj.V{i}, sV{i});
+            end            
+            
+            sT = cellfun(@(x) sV(x)', obj.I, 'UniformOutput', false);
+            sD = obj.newFrom(sT);
+        end
+        
+        function Dnew = merge(obj, D2)
+            Tnew = [obj.T; D2.T];
+            Ynew = [obj.Y; D2.Y];
+            
+            Dnew = obj.newFrom(Tnew, Ynew);
         end
     end
     

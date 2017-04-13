@@ -36,6 +36,8 @@ dss = cell(numel(datasets),1);
 fss = cell(numel(datasets),1);
 llss = cell(numel(datasets),1);
 
+distanceBinEdges = [0.0 0.3 0.4:0.1:1];
+
 for li=1:numel(datasets)
     dataset = datasets(li);
     fprintf('Dataset %d: %d/%d \n', dataset, li,numel(datasets));
@@ -59,58 +61,68 @@ for li=1:numel(datasets)
     
     dist = pdist2(m.X(uVi, :), m.X(EW.Vi,:), 'cosine');
     dist(dist>1) = 1; % Sometimes we have distances > 1
-    refs= 1:size(Fref,1);
     
-    K = 5:5:113;
+    [dist_sorted, ii] = sort(dist, 2);
     
-    %distanceBins = 0:0.05:1;
+    % Put distances in 20 bins
+    Y = discretize(dist_sorted, distanceBinEdges);
+    
+    refs = 1:size(Fref,1);
     
     deltaK = 10;
-    lls = zeros(numel(refs),numel(K));
-    fs = zeros(numel(refs), numel(K));
-    ds = zeros(numel(refs), numel(K));
+    lls = nan(numel(refs),numel(distanceBinEdges));
+    fs = nan(numel(refs), numel(distanceBinEdges));
+    ds = nan(numel(refs), numel(distanceBinEdges));
     
     for ref=refs
         p_ref = p(ref);
         n_ref = Fref.NDocs(ref) + Fref.PDocs(ref);
         k_ref = Fref.PDocs(ref);
         L_ref = p_ref.^k_ref*(1-p_ref).^(n_ref-k_ref);
+        counts = zeros(1,numel(distanceBinEdges));
+        % Get all samples sorted by size
+        l = nan(size(dist,2)-1,numel(distanceBinEdges));
+        f = nan(size(dist,2)-1,numel(distanceBinEdges));
+        d = nan(size(dist,2)-1,numel(distanceBinEdges));
         
-        sample_size = 3;
-        for i = 1:numel(K)
+        for i = 2:size(dist,2)
+            s = ii(ref,i);            
+            y = Y(ref,i); % discretized distance (=bin number)
+                        
+            fs(ref,y) = fs(ref,y) + F.Frequency(s);
+            ds(ref,y) = ds(ref,y) + dist(ref,s);            
             
-            ii = sorti(dist(ref,:),'ascend');
-            c = ii(2:(K(i)+1));
+            % Compute likelihood delta
+            [deltaL, L_] = likelihood_ind(F,  n_ref, k_ref, L_ref, s); 
             
-            for k=1:1000
-                s = randsample(c,sample_size);
-                
-                fs(ref,i) = fs(ref,i) + sum(F.Frequency(s));
-                ds(ref,i) = ds(ref,i) + sum(dist(ref,c));
-                assert(~isempty(c));
-                
-                %lls(ref,i) = lls(ref,i) + likelihood_(F, p_ref,s,p(s));
-                
-                lls(ref,i) = lls(ref,i) + likelihood_ind(F,  n_ref, k_ref, L_ref, s);
-            end
-            fs(ref,i) =  1/k * fs(ref,i);
-            ds(ref,i) =  1/(k*K(i)) * ds(ref,i);
-            lls(ref,i) = 1/k * lls(ref,i);
+            deltaL_ = abs(1/2 - L_/(L_ref+L_));
             
+            lls(ref,y) = lls(ref,y) + deltaL_;
+            
+            counts(y) =  counts(y) + 1;
+            l(i,y) = deltaL_;
+            f(i,y) = F.Frequency(s);
+            d(i,y) = dist(ref,s);
         end
+        fs(ref,:) = median(f, 'omitnan');
+        lls(ref,:) = median(l, 'omitnan');
+        ds(ref,:) = median(d, 'omitnan');
     end
-    
+   
     llss{li} = lls;
     dss{li} = ds;
     fss{li} = fs;
 end
+lls_all = [llss{1}; llss{2}; llss{3}; llss{4}; llss{5}; llss{6}; llss{7}];
 lls_all(lls_all==Inf) = NaN;
-mlls = mean(lls_all,1,'omitnan');
-figure; plot(K, mlls);
+mlls = median(lls_all,1,'omitnan');
+figure; plot(distanceBinEdges, mlls);
 
-[ds_s, ii] = sort(mean(dss_all,1),'ascend');
-figure; scatter(ds_s, mlls(ii), '.');
-
-figure; scatter(K, mean(fss_all,1));
+% dss_all = [dss{1}; dss{2}; dss{3}; dss{4}; dss{5}; dss{6}; dss{7}];
+% ds_s = mean(dss_all,1, 'omitnan');
+% figure; plot(ds_s, mlls);
+% 
+% fss_all = [fss{1}; fss{2}; fss{3}; fss{4}; fss{5}; fss{6}; fss{7}];
+% figure; plot(distanceBinEdges, median(fss_all,'omitnan'));
 
 

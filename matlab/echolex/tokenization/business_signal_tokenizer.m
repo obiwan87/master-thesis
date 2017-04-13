@@ -11,6 +11,7 @@ Ds = cell(sum(original_files),1);
 numbers = {};
 
 % Load stopwords from NLTK-database
+replace_stopwords = false;
 stopwords = cell(py.echolex.bridge2matlab.nltk_lazy_load.stopwords('german'))';
 stopwords = cellfun(@char, stopwords, 'UniformOutput', false);
 stopwords{end+1} = 'dass';
@@ -43,8 +44,9 @@ if replace_umlauts
         stopwords = strrep(stopwords, umlaut_replacement{i}{1}, umlaut_replacement{i}{2});
     end
 end
-tokenized_sentences = {};
+
 for i=1:numel(Ds)
+    tokenized_sentences = {};
     filepath = fullfile(filelist(i).folder, filelist(i).name);
     
     fid = fopen(filepath);
@@ -85,11 +87,12 @@ for i=1:numel(Ds)
             end
         end
         
-        tokens_lower = lower(tokens);
-        stopwords_idx = find(sum(tokens_lower == stopwords));
-        
-        tokens(stopwords_idx) = [];
-        
+        if replace_stopwords
+            tokens_lower = lower(tokens);
+            stopwords_idx = find(sum(tokens_lower == stopwords));
+            
+            tokens(stopwords_idx) = [];
+        end
         tokenized_sentences{j} = tokens.cellstr;
         tline = fgetl(fid);
         j = j + 1;

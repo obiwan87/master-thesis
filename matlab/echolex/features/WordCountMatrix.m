@@ -4,6 +4,7 @@ classdef WordCountMatrix < pipeline.featextraction.FeatureExtractor
     
     properties
         KeepUnigrams % If true, decomposes ngrams to its unigrams and adds an entry to the word count matrix for each unigram
+        Binary
     end
     
     methods
@@ -28,7 +29,12 @@ classdef WordCountMatrix < pipeline.featextraction.FeatureExtractor
                 D = D.newFrom(text);
                 
             end
-            r = struct('Out', datalabelprovider(full(D.wordCountMatrix()), D.Y));
+            data = full(D.wordCountMatrix());
+            
+            if obj.Binary 
+                data(data>1) = 1;
+            end
+            r = struct('Out', datalabelprovider(data, D.Y));
         end
     end
     
@@ -42,10 +48,12 @@ classdef WordCountMatrix < pipeline.featextraction.FeatureExtractor
             p = createConfigurationInputParser@pipeline.AtomicPipelineStep(obj);
             
             addParameter(p, 'KeepUnigrams', false, @islogical);
+            addParameter(p, 'Binary', false, @islogical);
         end
         
         function config(obj, args)
             obj.KeepUnigrams = args.KeepUnigrams;
+            obj.Binary = args.Binary;
         end
     end
 end

@@ -1,5 +1,5 @@
-function [ bnns, bdist ] = bigrams_nns( m, bigrams_ref, bigrams_query, varargin )
-% BIGRAMS_NNSSummary of this function goes here
+function [ bnns, bdist ] = bigrams_pdist2( m, bigrams_ref, bigrams_query, varargin )
+% BIGRAMS_PDIST2 Summary of this function goes here
 %   Detailed explanation goes here
 
 % * Get bigrams of test dataset (query) and training dataset (ref)
@@ -7,9 +7,7 @@ function [ bnns, bdist ] = bigrams_nns( m, bigrams_ref, bigrams_query, varargin 
 %   ref
 % ------------------ BOTH UNIGRAMS IN WORD2VEC VOCABULARY ----------------
 % * Calculate unigrams of bigrams of query and ref
-% * Get K-NNs of first unigrams 
-%      o For bigrams having the first unigram in the K-Neighborhood search
-%      for K'-NNs of second unigram
+% * Get neighbors of i-th unigrams within radius theta_d
 % * Calculate an overall distance between unigrams
 %       o d = f(d1,d2) e.g.
 %           - f(d1,d2) = harmmean(d1,d2)
@@ -98,7 +96,7 @@ for i=1:size(bigrams_query,1)
         u2 = queried_u2_ref(u2~=0);
         [~,~,u2_i_ref] = intersect(u2, nZ2i_u2_ref);
         
-        u2_i = nZ2i_u2_ref == b_i(2);
+        u2_i = nZ2i_u2_query == b_i(2);
         
         u2_c = find(dist_u2(u2_i,u2_i_ref) < theta_d);
         u2_query = false(size(bigrams_ref,1),1);

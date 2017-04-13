@@ -33,7 +33,7 @@ classdef Word2VecModel < handle
             [idx, d] = knnsearch(obj.X, v, 'K', K, 'distance', ...
                 'cosine');
             
-            T = table(obj.Terms(idx), 1-d', 'VariableNames', {'word', 'distance'});
+            T = table(obj.Terms(idx), 1-d', 'VariableNames', {'word', 'similarity'});
             if nargout <= 0
                 T %#ok<NOPRT>
             end

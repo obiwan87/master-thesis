@@ -1,9 +1,7 @@
-function [e, posterior, accuracy, model] = modelQuality( data, labels, c )
+function [e, posterior, accuracy] = modelQuality(model, data, labels, c )
 
-trainingSet = training(c);
 testSet = find(test(c));
 
-model = fitcnb(data(trainingSet,:), labels(trainingSet), 'Distribution', 'mn');
 [predictions, posterior] = predict(model, data(testSet,:));
 
 accuracy = sum(predictions == labels(testSet))/numel(testSet);
