@@ -1,6 +1,9 @@
 %W = Ws{1};
 %W.prepare();
 bigramFinder = BigramFinder.fromDocumentSet(W);
+
+substitute_training_set = true;
+
 %scores = bigramFinder.ngramsScores('raw_freq');
 EW = bigramFinder.generateNgramsDocumentSet('raw_freq', size(scores,1));
 EW.findBigrams();
@@ -36,13 +39,23 @@ ii1 = sub2ind(size(posteriors1), 1:size(posteriors1,1), (EW.Y(test(c))+1)');
 
 acc1 = sum(predictions1 == EW.Y(test(c))) / numel(predictions1)
 
-clusters = pairwise_clustering_bigrams(trD, 'Cutoff', cutoff, 'Linkage', 'complete', 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', 1-a, 'BigramsPDistParams', {'MaxDistance', 1});
-[substitutionMap1, clusterWordMap] = apply_cluster_substitutions_bigrams(trD, clusters);
-sTrD = trD.applySubstitution(substitutionMap1);
+if substitute_training_set
+    clusters = pairwise_clustering_bigrams(trD, 'Cutoff', cutoff, 'Linkage', 'complete', 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', 1-a, 'BigramsPDistParams', {'MaxDistance', 1});
+    [substitutionMap1, clusterWordMap] = apply_cluster_substitutions_bigrams(trD, clusters);
+    sTrD = trD.applySubstitution(substitutionMap1);
+else
+    clusters = 1:numel(trD.V);
+    clusterWordMap = trD.V;
+    clusterWordMapVi = trD.Vi;
+    substitutionMap1 = containers.Map();
+    sTrD = trD;
+end
 
+tic
 substitutionMap2 = nearest_cluster_substitution_bigrams(teD, trD, clusters, clusterWordMap, 'Method', 'min', 'MaxDistance', maxDistance);
 substitutionMap = [substitutionMap1; substitutionMap2];
 sTeD = teD.applySubstitution(substitutionMap);
+toc 
 
 tic
 sT = cell(size(EW.T));
@@ -51,9 +64,9 @@ sT(test(c)) = sTeD.T;
 sY = zeros(size(EW.Y));
 sY(training(c)) = EW.Y(training(c));
 sY(test(c)) = EW.Y(test(c));
-sD = io.Word2VecDocumentSet(EW.m, sT, sY);
+sD = io.DocumentSet(sT, sY);
 sD.prepare();
-sWC = sD.wordCountMatrix();
+sWC = sD.W;
 sWC(sWC>1) = 1;
 toc
 

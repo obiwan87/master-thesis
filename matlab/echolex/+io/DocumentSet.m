@@ -49,7 +49,13 @@ classdef DocumentSet < handle
                 obj.extractVocabulary();
             end
             
-            I = cellfun(@(x) cellfun(@(y) find(strcmp(y,obj.V)), x), obj.T, 'UniformOutput', false);
+            map = containers.Map();
+            
+            for i=1:numel(obj.V)
+                map(obj.V{i}) = i;
+            end
+            
+            I = cellfun(@(x) cellfun(@(y) map(y), x), obj.T, 'UniformOutput', false);
             obj.I = I;
             
         end
@@ -128,8 +134,8 @@ classdef DocumentSet < handle
             W = sparse(numDocs,vocSize);
             for i=1:numDocs
                 d = obj.I{i};
-                M = unique(d);
-                C = arrayfun(@(x) sum(x==d), M);
+                M = unique(d);                
+                C = histc(d,M);
                 
                 W(i,M) = C; %#ok<SPRIX>
             end

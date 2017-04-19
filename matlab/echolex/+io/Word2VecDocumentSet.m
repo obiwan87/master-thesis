@@ -28,10 +28,7 @@ classdef Word2VecDocumentSet < io.DocumentSet
             N = io.Word2VecDocumentSet(obj.m, T, Y);
         end        
         
-        function [trD, teD] = split(obj, c)
-            testIdx = test(c);
-            trainingIdx = training(c);
-            
+        function [trD, teD] = split(obj, testIdx, trainingIdx)                        
             trD = obj.subset(trainingIdx);
             teD = obj.subset(testIdx);                       
         end

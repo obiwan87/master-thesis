@@ -1,14 +1,10 @@
 %terms = string(m.Terms);
-
 filelist = dir(business_signals_data);
 filelist = filelist(~[filelist.isdir]);
 original_files = cellfun(@(x) endsWith(x,'.txt'), {filelist.name}); % not preprocessed: string \t label
 filelist = filelist(original_files);
 
 Ds = cell(sum(original_files),1);
-
-% Keep track of what special chars and numbers were found
-numbers = {};
 
 % Load stopwords from NLTK-database
 replace_stopwords = false;
@@ -28,13 +24,19 @@ stopwords{end+1} = 'beim';
 exclude_tokens = ['#', '@', '~', '.', '..', '...', ',', ';', ':', '(', ')', '"', '''', '[', ']', '{', '}', '?', '!', '-', '–', '+', '*', '--', '''''', '``'];
 %number_regex = '^-?\d+((,|\.)\d+)*((,|\.)\d+(e\d+)?)?$';
 
+tokenize_numbers = false;
 number_regex = '^([0-9\-\.,]+|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf)$';
-jaehriges_regex = '^([0-9]+|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf)\-?(jährig|jaehrig)(e|es|er|en|em)?$';
+number_token = '<number>';
 
+tokenize_jaehriges = false;
+jaehriges_regex = '^([0-9]+|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf)\-?(jährig|jaehrig)(e|es|er|en|em)?$';
+jaehriges_token = '<#-jähriges>';
+
+remove_special_chars = false;
 special_chars_regex = ['^[' regexptranslate('escape', special_chars) ']*$'];
 neg_word_chars_regex = '[^A-Za-z0-9öäüßÖÄÜÂÃÅÑÚÞáâãçèéêíîïðñóôûąćęłńřśŠ€²šż́̈β\- ]';
-number_token = '<number>';
-jaehriges_token = '<#-jähriges>';
+
+replace_underscore = true;
 
 replace_umlauts = true;
 umlaut_replacement = { { 'Ä', 'Ae' }, {'Ö', 'Oe' }, {'Ü', 'Ue'} , {'ä', 'ae' }, {'ö', 'oe' }, {'ü', 'ue'}, {'ß', 'ss'} };
@@ -44,6 +46,8 @@ if replace_umlauts
         stopwords = strrep(stopwords, umlaut_replacement{i}{1}, umlaut_replacement{i}{2});
     end
 end
+
+tokenizer = py.nltk.tokenize.TweetTokenizer();
 
 for i=1:numel(Ds)
     tokenized_sentences = {};
@@ -61,23 +65,31 @@ for i=1:numel(Ds)
         labels = [labels; label];
         
         % Remove special characters except "-"
-        matches = regexp(sentence, '');
-        
-        tokens = cell(py.nltk.word_tokenize(sentence));
-        
+        matches = regexp(sentence, '');        
+        tokens = cell(tokenizer.tokenize(sentence));        
         tokens = string(cellfun(@char, tokens, 'UniformOutput', false));
         
-        % Remove non-word-characters with
-        tokens = regexprep(tokens, neg_word_chars_regex, '');
+        if remove_special_chars
+            % Remove non-word-characters with
+            tokens = regexprep(tokens, neg_word_chars_regex, '');
+        end
         
-        % Replace numbers with <numbers> token
-        tokens = regexprep(tokens, number_regex, number_token, 'ignorecase');
+        if tokenize_numbers
+            % Replace numbers with <numbers> token
+            tokens = regexprep(tokens, number_regex, number_token, 'ignorecase');
+        end
         
-        % Replace -jaeheriges expression
-        tokens = regexprep(tokens, jaehriges_regex, jaehriges_token, 'ignorecase');
+        if tokenize_jaehriges
+            % Replace -jaeheriges expression
+            tokens = regexprep(tokens, jaehriges_regex, jaehriges_token, 'ignorecase');
+        end
+        
+        if replace_underscore
+            tokens = strrep(tokens, '_', '--');
+        end
         
         % Remove words consisting of only "-"
-        tokens = regexprep(tokens,'^-+$','');
+        % tokens = regexprep(tokens,'^-+$','');
         tokens(tokens == '') = [];
         
         % Replace Umlauts
@@ -98,7 +110,7 @@ for i=1:numel(Ds)
         j = j + 1;
     end
     
-    numbers = unique(numbers);
-    Ds{i} = io.DocumentSet(tokenized_sentences', labels);
+    Ds{i} = io.DocumentSet(tokenized_sentences', labels);   
+    Ds{i}.prepare();
 end
 
