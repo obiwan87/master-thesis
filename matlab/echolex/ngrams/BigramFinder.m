@@ -135,7 +135,7 @@ classdef BigramFinder < NGramFinder
                 ngrams_sentence = BigramFinder.calculateNGrams(sentence, n);
                 T{i} = ngrams_sentence;
                 if keepUnigrams
-                    T{i} = [sentence T{i}];
+                    T{i} = [D.T{i} T{i}];
                 end
             end
             
