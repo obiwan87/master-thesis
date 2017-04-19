@@ -132,10 +132,7 @@ classdef BigramFinder < NGramFinder
             for i = 1:numel(D.T)
                 sentence = D.T{i};   
                 sentence = [startToken sentence endToken]; %#ok<AGROW>
-                bigrams = cell(py.list(py.nltk.ngrams(sentence, n)));
-                bigrams = cellfun(@(x) join(strrep(string(cell(x)),'_','-'), '_'), bigrams, 'UniformOutput', false);               
-                ngrams_sentence = cellstr(string(bigrams));
-                
+                ngrams_sentence = BigramFinder.calculateNGrams(sentence, n);
                 T{i} = ngrams_sentence;
                 if keepUnigrams
                     T{i} = [sentence T{i}];
@@ -143,6 +140,24 @@ classdef BigramFinder < NGramFinder
             end
             
             ND = D.newFrom(T);
+        end
+        
+        function r = calculateNGrams(s, N)
+            warning('off', 'MATLAB:hankel:AntiDiagonalConflict');
+            n = numel(s);
+            
+            h = hankel(1:n, 1:N);
+            h = h(1:n-N+1,:);
+            h = reshape(h, numel(h)/2, 2);
+            
+            r = s( h );
+            r = arrayfun(@(x) strjoin(r(x,:),'_'), 1:size(r,1),'UniformOutput', false);
+        end
+        
+        function r = calculateNGramsPy(sentence, n)
+              bigrams = cell(py.list(py.nltk.ngrams(sentence, n)));
+              bigrams = cellfun(@(x) join(strrep(string(cell(x)),'_','-'), '_'), bigrams, 'UniformOutput', false);               
+              r = cellstr(string(bigrams));
         end
         
         function obj = fromDocumentSet(D)
