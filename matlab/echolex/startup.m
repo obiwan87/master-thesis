@@ -15,6 +15,9 @@ if exist('gpuDevice', 'builtin')
     g = gpuDevice;
 end
 
+% Python path
+insert(py.sys.path, int32(0), fullfile(echolex_src, 'python'));
+
 % If no display available, edit files with 'vim'
 setenv('EDITOR', 'vim');
 

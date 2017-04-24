@@ -11,6 +11,8 @@ from gensim.models import Word2Vec
 
 from utils.utils import replace_umlauts, Timer
 
+from utils.utils import raw_freq
+
 model_path = "/media/echobot/Volume/home/simon/uni/masterarbeit/de/model/01/my.model"
 model = Word2Vec.load_word2vec_format(model_path, binary=True)
 w2v = {w: vec for w,vec in zip(model.index2word, model.syn0)}

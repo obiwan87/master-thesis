@@ -1,12 +1,7 @@
 classdef SVMClassifier < pipeline.classification.Classifier
     %SVMCLASSIFIER Evaluates an SVM-Model with the passed parameters
     %   Detailed explanation goes here
-    
-    properties
-        CrossvalParams
-        Repeat
-    end
-    
+        
     properties(Hidden)
         predictions = {};
     end
@@ -56,7 +51,7 @@ classdef SVMClassifier < pipeline.classification.Classifier
     
     methods(Access=protected)
         % TODO: Finish
-        function e = lossfun(obj, C, Sfit, W, ~)
+        function e = lossfun(~, C, Sfit, W, ~)
             
             if size(C,2)==1
                 e = 0;
@@ -76,29 +71,10 @@ classdef SVMClassifier < pipeline.classification.Classifier
         
     end
     
-    methods(Access=protected)
-        function p = createConfigurationInputParser(obj)
-            p = createConfigurationInputParser@pipeline.AtomicPipelineStep(obj);
-            
-            % Algorithm Parameters
-            addParameter(p, 'CrossvalParams', {'kfold', 10}, @iscell);
-            addParameter(p, 'Repeat', 1, @is_pos_integer);
-            
-            function b = is_pos_integer(x)
-                b = isscalar(x) && x >= 1 && floor(x) == x;
-            end
-        end
-        
+    methods(Access=protected)       
         function p = createPipelineInputParser(obj)
             p = createPipelineInputParser@pipeline.classification.Classifier(obj);
             addRequired(p, 'DataLabelProvider', @(x) isa(x, 'pipeline.io.DataProvider') && isa(x, 'pipeline.io.LabelProvider') );
-        end
-        
-        function config(obj, args)
-            config@pipeline.AtomicPipelineStep(obj, args)
-            
-            obj.CrossvalParams = args.CrossvalParams;
-            obj.Repeat = args.Repeat;
         end
     end
     

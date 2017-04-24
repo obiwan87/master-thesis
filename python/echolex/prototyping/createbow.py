@@ -4,15 +4,19 @@ from __builtin__ import list
 from gensim.corpora import Dictionary
 import csv
 
-path = "/media/echobot/Volume/home/simon/uni/masterarbeit/dewiki/corpus/"
-corpus_filename =  "news.2013.de.shuffled.corpus"
+import codecs
+
+# path = "/media/echobot/Volume/home/simon/uni/masterarbeit/dewiki/corpus/"
+path = '/media/echobot/Volume/home/simon/uni/masterarbeit/data/de/corpus/echobot/corpus/'
+corpus_filename =  "train-big.corpus.all"
 corpus_path = path + corpus_filename
 
-print("Copying sentences into memory... (fingers crossed)")
+print("Copying sentences into memory... ")
 dictionary = Dictionary()
-maxdoc = 2000000
 
-with open(corpus_path, "r") as corpus_file:
+maxdoc = 81556025*2; # Result of wc -l <source-file> ... *2 because of .bigram file
+
+with codecs.open(corpus_path, "r") as corpus_file:
     i = 0
 
     for line in corpus_file:
@@ -21,7 +25,7 @@ with open(corpus_path, "r") as corpus_file:
             print(i)
 
         # If you wanna test something..
-        if maxdoc > 0 and i >= maxdoc:
+        if 0 < maxdoc <= i:
             break
 
         sentence = [line.split()]

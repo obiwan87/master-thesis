@@ -6,12 +6,12 @@ classdef Word2VecModel < handle
         Terms
         X
         Frequencies
-        NumberOfWords        
+        NumberOfWords
     end
     
     methods
         function obj = Word2VecModel(terms, vectors)
-            obj.Terms = terms;            
+            obj.Terms = terms;
             obj.X = vectors;
         end
         
@@ -33,7 +33,7 @@ classdef Word2VecModel < handle
             [idx, d] = knnsearch(obj.X, v, 'K', K, 'distance', ...
                 'cosine');
             
-            T = table(obj.Terms(idx), d', 'VariableNames', {'word', 'distance'});
+            T = table(obj.Terms(idx), 1-d', 'VariableNames', {'word', 'similarity'});
             if nargout <= 0
                 T %#ok<NOPRT>
             end
@@ -55,6 +55,17 @@ classdef Word2VecModel < handle
             end
             hold off
             
+        end
+        
+        function d = project2D(obj, idx)
+            d = obj.project(idx, 2);
+        end
+        
+        function d = project(obj, idx, N)
+            D = obj.X(idx,:);
+            [coeff, ~] = pca(D);
+            
+            d = double(D * coeff(:,1:N));
         end
         
         function plotknn( obj, w, k, highlight)
@@ -81,7 +92,8 @@ classdef Word2VecModel < handle
             [coeff, ~] = pca(D);
             
             d = double(D * coeff(:,1:2));
-            figure; scatter(d(:,1), d(:,2), '.');
+            figure;
+            scatter(d(1:end,1), d(1:end,2), '.w');
             hold on
             
             % Plot reference vector
@@ -101,6 +113,44 @@ classdef Word2VecModel < handle
                 end
             end
             hold off
+            
+        end
+        
+        function h = plotanalogies(obj, words)
+            [~,idxA,idxB] = intersect(m.Terms, words);
+            idxA(idxB) = idxA;
+            idx = idxA;
+            d = obj.project2D(idx);
+            
+            h = scatter(d(:,1), d(:,2), '.');
+            hold on
+            for i = 1:(numel(idx)/2)
+                j = (i-1)*2 + 1;
+                
+                % Capital
+                w1 = words{j};
+                v1 = d(j, :);
+                % Country
+                w2 = words{j+1};
+                v2 = d(j+1, :);
+                
+                text(v2(1), v2(2), w2)%, 'BackgroundColor', 'w');
+                arrow(v1,v2, 'Length', 5);
+                text(v1(1), v1(2), w1)%, 'BackgroundColor', 'w');
+            end
+            hold off
+            
+        end
+        
+        function s = similarity(obj, w1, w2)
+            v1 = obj.vector(w1);
+            v2 = obj.vector(w2);
+            
+            if ~isempty(v1) && ~isempty(v2)
+                s = 1 - pdist([v1; v2], 'cosine');
+            else
+                s = single(-1);
+            end
         end
     end
     

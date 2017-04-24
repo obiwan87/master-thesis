@@ -18,25 +18,34 @@ classdef GACLexicalSubstitution < LexicalSubstitutionPreprocessor
         
         function r = doExecute(obj, ~, args)
             W = args.Word2VecDocumentSet;
-            A = double(squareform(pdist( W.m.X(W.Vi,:),'cosine')));
+            nZ = W.Vi ~= 0;%nonZero entries
+            Vi = W.Vi(nZ);
             
-            clusteredLabels  = gacCluster(A, obj.GroupNumber, obj.StructuralDescriptor, obj.K, obj.a, obj.z);
+            A = double(squareform(pdist( W.m.X(Vi,:),'cosine')));
             
+            clusteredLabels = gacCluster(A, obj.GroupNumber, obj.StructuralDescriptor, obj.K, obj.a, obj.z);
+            %clusteredLabels = randi(obj.GroupNumber, size(Vi));
+            % Substitution array (initialize with identity)
+            C = 1:numel(W.V);          
+            
+            nZ = find(nZ);
+            % Chose one surrogate for each cluster
             F = W.termFrequencies().Frequency;
             clusters = unique(clusteredLabels);
-            substitutes = zeros(numel(clusters),1);
+            
             for i=1:numel(clusters)           
                 samples = find(clusteredLabels == clusters(i));
-                substitute = samples(maxi(F(samples)));
-                substitutes(i) = substitute;                
+                substitute = samples(maxi(F(nZ(samples))));
+                C(nZ(samples)) = nZ(substitute);              
             end
             
-            LI = cellfun(@(x) substitutes(clusteredLabels(x)), W.I, 'UniformOutput', false);
+            % TODO: size(Vi,1) not entire vocabulary.
+            LI = cellfun(@(x) C(x), W.I, 'UniformOutput', false);
             LT = cellfun(@(x) W.V(x)', LI, 'UniformOutput', false);
             
             LW = io.Word2VecDocumentSet(W.m, LT, W.Y);
             
-            r = struct('Out', LW);
+            r = struct('Out', LW, 'clusteredLabels', clusteredLabels);
         end
     end
     
