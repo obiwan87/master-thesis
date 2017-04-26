@@ -132,10 +132,14 @@ classdef BigramFinder < NGramFinder
             for i = 1:numel(D.T)
                 sentence = D.T{i};   
                 sentence = [startToken sentence endToken]; %#ok<AGROW>
-                ngrams_sentence = BigramFinder.calculateNGrams(sentence, n);
-                T{i} = ngrams_sentence;
-                if keepUnigrams
-                    T{i} = [D.T{i} T{i}];
+                T{i} = D.T{i};
+                for N=2:n
+                    ngrams_sentence = BigramFinder.calculateNGrams(sentence, N);                    
+                    if keepUnigrams
+                        T{i} = [T{i} ngrams_sentence];
+                    else
+                        T{i} = ngrams_sentence;
+                    end
                 end
             end
             
@@ -148,7 +152,7 @@ classdef BigramFinder < NGramFinder
             
             h = hankel(1:n, 1:N);
             h = h(1:n-N+1,:);
-            h = reshape(h, numel(h)/2, 2);
+            h = reshape(h, numel(h)/N, N);
             
             r = s( h );
             r = arrayfun(@(x) strjoin(r(x,:),'_'), 1:size(r,1),'UniformOutput', false);

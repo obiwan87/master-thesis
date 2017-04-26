@@ -1,7 +1,11 @@
-function [dist_u, pL_] = calculate_unigrams_distances(D, useGpu)
+function [dist_u, pL_] = calculate_unigrams_distances(D, useGpu, cutAfterOne)
 
 if nargin < 2
     useGpu = false;
+end
+
+if nargin < 3
+    cutAfterOne = true;
 end
 
 % Word2Vec-Model
@@ -17,12 +21,14 @@ w2v_u_i = w2v_u_i(w2v_u_i~=0);
 
 X = m.X(w2v_u_i,:);
 if ~useGpu
-    dist_u = double(squareform(pdist(X,'cosine')));
+    dist_u = double(squareform(pdist(double(X),'cosine')));
 else
     dist_u = double(gather(squareform(pdist(gpuArray(X),'cosine'))));
 end
 
-dist_u(dist_u > 1) = 1;
+if cutAfterOne
+    dist_u(dist_u > 1) = 1;
+end
 
 % Frequencies of unigrams
 F = D.termFrequencies();
@@ -46,7 +52,7 @@ n = N + N';
 P_ = k./n;
 L_ = P_.^k.*(1-P_).^(n-k);
 pL_ = L_ ./ (L + L_);
-
+pL_(pL_>0.5) = 0.5; % due to numerical imprecision we might get values slightly over 0.5
 if useGpu
     pL_ = gather(pL_);
 end
