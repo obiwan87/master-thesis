@@ -1,8 +1,11 @@
-function [ acc ] = trainTestNBSVM( EW, trainingIdx, testIdx)
+function [ acc ] = trainTestNBSVM( D, trainingIdx, testIdx, p)
 
-params = struct('dictsize', numel(EW.V), 'trainp', 0, 'testp', 0, 'C', 1);
-model = trainMNBSVM(EW.I(trainingIdx)',~EW.Y(trainingIdx)', params);
-acc = testMNBSVM(model, EW.I(testIdx)',~EW.Y(testIdx)', params);
+if nargin < 4
+    p = 0;
+end
+params = struct('dictsize', numel(D.V), 'trainp', p, 'testp', p, 'C', 1);
+model = trainMNBSVM(D.I(trainingIdx)',~D.Y(trainingIdx)', params);
+acc = testMNBSVM(model, D.I(testIdx)',~D.Y(testIdx)', params);
 acc = acc(1)/100;
 
 end

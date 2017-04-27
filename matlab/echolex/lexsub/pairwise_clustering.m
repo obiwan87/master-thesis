@@ -45,10 +45,10 @@ p.KeepUnmatched = true;
 
 % Algorithm Parameters
 addParameter(p, 'MaxDistance', 0.8, @(x) x > 0);
-addParameter(p, 'ScoreFunction', @(pL_,dists,a,b) (1-2*pL_)*a + dists*b, @(x) isa(x, 'function_handle'));
-addParameter(p, 'ScoreFunctionParam1', 1.3, @(x) true);
-addParameter(p, 'ScoreFunctionParam2', 0.7, @(x) true);
-addParameter(p, 'Cutoff', 0.4, @(x) isscalar(x));
+addParameter(p, 'ScoreFunction', @(pL_,dists,a,b) (1-2*pL_)*a + dists/2*b, @(x) isa(x, 'function_handle'));
+addParameter(p, 'ScoreFunctionParam1', 0.5, @(x) true);
+addParameter(p, 'ScoreFunctionParam2', 0.5, @(x) true);
+addParameter(p, 'Cutoff', 0.2, @(x) isscalar(x));
 addParameter(p, 'Linkage', 'weighted', @(x) true);
 addParameter(p, 'MergeCriterion', 'distance', @(x) true);
 
