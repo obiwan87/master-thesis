@@ -1,4 +1,4 @@
-function [ substitutionMap ] = nearest_cluster_substitution( teD, trD, clusters, clusterWordMapVi, varargin )
+function [ substitutionMap, clusterAssignmentMap, unseenWords, nns, dist] = nearest_cluster_substitution( teD, trD, clusters, clusterWordMapVi, varargin )
 
 params = create_parser(varargin);
 
@@ -11,6 +11,7 @@ maxDistance = params.MaxDistance;
 C = unique(clusters);
 
 m = teD.m;
+unseenWords = m.Terms(uV);
 centroids = zeros(size(C,1), size(m.X,2));
 Vi = trD.Vi(trD.Vi ~= 0);
 
@@ -45,20 +46,23 @@ else
     for i=1:numel(C)
         b = clusters == C(i);
         cluster_freqs(i) = sum(trF.Frequency(b));
-        if cluster_freqs(i) > 1
-            cluster_dists(:,i) = f(all_dists(:,b));
-        else
-            cluster_dists(:,i) = Inf;
-        end        
+%         if cluster_freqs(i) > 1
+        cluster_dists(:,i) = f(all_dists(:,b));
+%         else
+%             cluster_dists(:,i) = Inf;
+%         end        
     end
     
     [dist, nns] = sort(cluster_dists, 2, 'ascend');
 end
 
 substitutionMap = containers.Map();
+clusterAssignmentMap = containers.Map();
+
 for i=1:size(nns,1)    
     if dist(i,1) <= maxDistance    
         substitutionMap(teD.V{i_uV(i)}) = m.Terms{clusterWordMapVi(nns(i,1))};
+        clusterAssignmentMap(teD.V{i_uV(i)}) = nns(i,1);
     end
 end
 end

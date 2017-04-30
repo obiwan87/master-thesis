@@ -1,4 +1,4 @@
-function [ acc,  p] = trainTestNB( D, WC, trainingIdx, testIdx )
+function [ acc, p, predictions] = trainTestNB( D, WC, trainingIdx, testIdx )
 %TRAINTESTNB Summary of this function goes here
 %   Detailed explanation goes here
 

@@ -2,9 +2,13 @@
 N = 2;
 
 EW = Ws{2};
-%ngramsEW = bigramsWs{2};
-ngramsEW = BigramFinder.generateAllNGrams(EW,N,true);
-ngramsEW.wordCountMatrix();
+EW.B = [];
+EW.findBigrams();
+
+ngramsEW = bigramsWs{2};
+%ngramsEW = BigramFinder.generateAllNGrams(EW,N,true);
+%ngramsEW.wordCountMatrix();
+ngramsEW.B = [];
 ngramsEW.findBigrams();
 
 results_fields = ...
@@ -56,23 +60,23 @@ evaluateSubstitutionAppending = false;
 %% Parameters
 substituteModel = true;
 if substituteModel
-    cutoffs = [0.3 0.4];
-    as = [0.1 0.2 0.3];
+    cutoffs = 0.2;
+    as = 0.2;%[0 0.05 0.1 0.2];
 else
     as = 0;
     cutoffs = 0;
 end
-%scoreFunction = @(pL_,dists,a,b) (1-2*pL_)*a + dists/2*b;
+scoreFunction = @(pL_,dists,a,b) pL_*a + dists/2*b;
 %scoreFunction = @(pL_,dists,a,b) minkowski(cat(3,1-2*pL_,dists/2),a,3);
-scoreFunction = @(pL_,dists,a,b) max(cat(3,a*(1-2*pL_),(1-a)*dists/2),[],3);
-maxDistances = 0.6;
+%scoreFunction = @(pL_,dists,a,b) max(cat(3,pL_,dists/2),[],3);
+maxDistances = [0 0.4];
 linkages = {'complete'};
-methodNearestClusterAssignment = 'min';
+methodNearestClusterAssignment = 'average';
 param_combinations = allcomb(num2cell(cutoffs), num2cell(as), num2cell(maxDistances), num2cell(linkages));
 
 %% Evaluation
 folds = 10;
-runs = 5;
+runs = 1;
 
 all_results = cell(numel(folds),1);
 
@@ -171,7 +175,8 @@ for lj=1:numel(folds)
         
         %% Substitutions
         if substituteModel
-            [dist_u, pL_] = calculate_unigrams_distances(trD_uni,false,false);
+            dist_u = calculate_unigrams_distances(trD_uni,false,false);
+            pL_ = normalized_kld(trD_uni, true);
         end
         
         for li = 1:size(param_combinations,1)
@@ -303,14 +308,14 @@ for lj=1:numel(folds)
             
             disp('%%%%%%%%%%%%%%%%% NB-SVM %%%%%%%%%%%%%%%%%%%');
             fprintf('Accuracy Unigrams (Resub, Orig): %.2f %% (%d/%d) \n', acc1_uni_resub_svm*100, int32(acc1_uni_resub_svm*total_tr), total_tr);
-            fprintf('Accuracy Unigrams (Orig): %.2f %% (%d/%d) \n', acc1_uni_svm*100, int32(acc1_uni_svm*total), total);
             fprintf('Accuracy Unigrams (Resub, Sub): %.2f %% (%d/%d) \n', acc2_uni_resub_svm*100, int32(acc2_uni_resub_svm*total_tr), total_tr);
+            fprintf('Accuracy Unigrams (Orig): %.2f %% (%d/%d) \n', acc1_uni_svm*100, int32(acc1_uni_svm*total), total);            
             fprintf('Accuracy Unigrams (Sub): %.2f %% (%d/%d) \n', acc2_uni_svm*100, int32(acc2_uni_svm*total), total);            
             fprintf('Accuracy Unigrams (Sub-All): %.2f %% (%d/%d) \n \n', acc2_uni_svm_all*100, int32(acc2_uni_svm_all*total), total);
             
             fprintf('Accuracy Unigrams (Resub, Orig): %.2f %% (%d/%d) \n', acc1_bi_resub_svm*100, int32(acc1_bi_resub_svm*total_tr), total_tr);
-            fprintf('Accuracy Bigrams (Orig): %.2f %% (%d/%d) \n', acc1_bi_svm*100, int32(acc1_bi_svm*total), total);
             fprintf('Accuracy Unigrams (Resub, Sub): %.2f %% (%d/%d) \n', acc2_bi_resub_svm*100, int32(acc2_bi_resub_svm*total_tr), total_tr);
+            fprintf('Accuracy Bigrams (Orig): %.2f %% (%d/%d) \n', acc1_bi_svm*100, int32(acc1_bi_svm*total), total);            
             fprintf('Accuracy Bigrams (Sub): %.2f %% (%d/%d) \n', acc2_bi_svm*100, int32(acc2_bi_svm*total), total);            
             fprintf('Accuracy Bigrams (Sub-All): %.2f %% (%d/%d) \n \n', acc2_bi_svm_all*100, int32(acc2_bi_svm_all*total), total);
             
