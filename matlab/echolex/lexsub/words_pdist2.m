@@ -22,7 +22,7 @@ for i=1:numel(n)
     n_ref = V_ref(pos_ref);
     n_query = V_query(pos_query);
     
-    dist = ngrams_pdist2(m,n_ref,n_query,i);
+    dist = ngrams_pdist2(m,n_ref,n_query,n(i));
     dist = aggFcn(dist);
     
     D(pos_ref, pos_query) = dist;

@@ -2,7 +2,7 @@
 N = 2;
 
 W = Ws{7};
-
+W = io.Word2VecDocumentSet(W.m, W.T(1:100), W.Y(1:100));
 EW = W;
 EW.wordCountMatrix();
 % ngramsEW = bigramsWs{2};
@@ -36,14 +36,8 @@ evaluateSubstitutionAppending = false;
 
 
 %% Parameters
-substituteModel = true;
-if substituteModel
-    cutoffs = 0.4;
-    as = 0;%[0 0.05 0.1 0.2];
-else
-    as = 0;
-    cutoffs = 0;
-end
+cutoffs = 0.4;
+as = 0;%[0 0.05 0.1 0.2];
 scoreFunction = @(pL_,dists,a,b) pL_*a + dists/2*b;
 %scoreFunction = @(pL_,dists,a,b) minkowski(cat(3,1-2*pL_,dists/2),a,3);
 %scoreFunction = @(pL_,dists,a,b) max(cat(3,pL_,dists/2),[],3);
@@ -121,11 +115,17 @@ for lj=1:numel(folds)
         accuracies1_bi(i) = acc1_bi;
         accuracies1_bi_svm(i) = acc1_bi_svm;
         
-        %% Substitutions
-        if substituteModel
-            dist_u = words_pdist2(trD_bi.m, trD_bi.V, trD_bi.V);
-            pL_ = normalized_kld(trD_bi, false);
-        end
+        %% Substitutions        
+        trD_bi.w2vCount();
+        teD_bi.w2vCount();
+        
+        trV = trD_bi.V(trD_bi.ViCount >= 1 & trD_bi.B==2);
+        teV = teD_bi.V(teD_bi.ViCount >= 1 & teD_bi.B==2);
+        F = trD_bi.termFrequencies();
+        trF = F(trD_bi.ViCount >= 1 & trD_bi.B==2,:);
+        
+        dist_u = words_pdist2(trD_bi.m, trV, trV);
+        pL_ = normalized_kld(trF, trD_bi.Y);
         
         for li = 1:size(param_combinations,1)
             fprintf('Fold: %d/%d, Parameter Combination: %d/%d \n \n', i, abs(fold), li, size(param_combinations,1));
@@ -143,7 +143,7 @@ for lj=1:numel(folds)
                 clusters = pairwise_clustering(dist_u, pL_, 'Linkage', linkag, 'Cutoff', cutoff, 'ScoreFunction', scoreFunction, 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', b);
                 
                 % Get new training model
-                [substitutionMap1, clusterWordMap] = apply_cluster_substitutions2(trD_bi, clusters);
+                [substitutionMap1, clusterWordMap] = apply_cluster_substitutions2(trF, clusters);
                 sTrD = trD_bi.applySubstitution(substitutionMap1);
             else
                 clusters = 1:sum(trD_uni.Vi ~= 0);
@@ -153,7 +153,9 @@ for lj=1:numel(folds)
             end
             
             % Map unseen words to clostest cluster
-            substitutionMap2 = nearest_cluster_substitution_ngrams(teD_bi, trD_bi, clusters, clusterWordMap, 'Method', methodNearestClusterAssignment, 'MaxDistance', maxDistance);
+            substitutionMap2 = nearest_cluster_substitution_ngrams(trD_bi.m, teV, trV, trF, ...
+                     clusters, clusterWordMap, ...
+                     'Method', methodNearestClusterAssignment, 'MaxDistance', maxDistance);
             
             % Apply both substitutions to test set
             substitutionMap = [substitutionMap1; substitutionMap2];

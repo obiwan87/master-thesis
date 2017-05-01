@@ -1,8 +1,6 @@
-function [ substitutionMap, clusterWordMap] = apply_cluster_substitutions2( D, clusters )
+function [ substitutionMap, clusterWordMap] = apply_cluster_substitutions2( F, clusters )
 %APPLY_SUBSTITUTIONS Summary of this function goes here
 %   Detailed explanation goes here
-
-F = D.termFrequencies();
 
 C = unique(clusters);
 
@@ -18,8 +16,8 @@ end
 
 
 substitutionMap = containers.Map();
-for i=1:numel(D.V)    
-    substitutionMap(D.V{i}) = clusterWordMap{clusters(i)};
+for i=1:size(F,1)    
+    substitutionMap(F.Term{i}) = clusterWordMap{clusters(i)};
 end
 
 

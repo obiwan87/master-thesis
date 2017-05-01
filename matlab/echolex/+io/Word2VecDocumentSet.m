@@ -5,6 +5,7 @@ classdef Word2VecDocumentSet < io.DocumentSet
     properties
         Vi
         m
+        ViCount
     end
     
     methods
@@ -71,11 +72,37 @@ classdef Word2VecDocumentSet < io.DocumentSet
             
             [~,a2,b2] = intersect(obj.V,obj.m.Terms);
             obj.Vi(a2) = b2;            
+        end        
+        
+        function w2vCount(obj)
+            if isempty(obj.B)
+                obj.findBigrams();
+            end
+            
+            obj.ViCount = zeros(numel(obj.V),1);
+            unigrams = obj.V(obj.B==1);
+            unigrams_vi = obj.Vi(obj.B==1);
+            w2vMap = containers.Map();
+            for i=1:numel(unigrams)
+                w2vMap(unigrams{i}) = unigrams_vi(i);
+            end
+            
+            N = unique(obj.B);
+            for i=1:numel(N)
+                n = N(i);
+                if n == 1
+                    obj.ViCount(obj.Vi ~= 0) = 1;
+                else
+                    v = obj.V(obj.B==n);
+                    ngrams = cellstr(string(v).split('_'));
+                    counts = zeros(size(ngrams));
+                    for j=1:n
+                        counts(:,j) = cellfun(@(x) logical(w2vMap.isKey(x) && w2vMap(x)), ngrams(:,j));
+                    end
+                    obj.ViCount(obj.B==n) = sum(counts,2);
+                end
+            end
         end
-    end
-    
-    methods(Access=protected)
-
     end
 end
 

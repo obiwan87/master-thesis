@@ -1,26 +1,19 @@
-function D = kullback_leibler_divergence(W, onlyWord2Vec)
+function D = kullback_leibler_divergence(F,Y)
 
 % Calculates the symmetric kullback_leibler_divergence: 
 % P(w_s)*D(P(C|w_s)||P(C|w_s v w_t)) + P(w_t)*D(P(C|w_t)||P(C|w_s v w_t))
-if nargin < 2
-    onlyWord2Vec = false;
-end
 
-F = W.termFrequencies();
-nV = numel(W.V);
-if onlyWord2Vec
-    F = F(W.Vi~=0,:);
-    nV = sum(W.Vi~=0);
-end
+
+nV = size(F,1);
 
 K_P = F.PDocs;
 K_N = F.NDocs;
 
 wordPriorsPerClass = zeros(nV,2);
-wordPriorsPerClass(:,1) = (1+K_P)./(numel(W.V) + sum(K_P));
-wordPriorsPerClass(:,2) = (1+K_N)./(numel(W.V) + sum(K_N));
+wordPriorsPerClass(:,1) = (1+K_P)./(numel(nV) + sum(K_P));
+wordPriorsPerClass(:,2) = (1+K_N)./(numel(nV) + sum(K_N));
 
-priors = [sum(W.Y)/numel(W.Y) , sum(~W.Y)/numel(W.Y)];
+priors = [sum(Y)/numel(Y) , sum(~Y)/numel(Y)];
 wordPriors = sum(wordPriorsPerClass.*priors,2);
 
 wordPosteriors = (wordPriorsPerClass./sum(wordPriorsPerClass.*priors,2)).*priors;

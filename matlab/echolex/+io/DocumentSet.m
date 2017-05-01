@@ -10,6 +10,7 @@ classdef DocumentSet < handle
         I = [] % Document-Matrix with Words as indexes of V
         W = [] % Word-Count-Matrix
         B = [] % Bigrams: Indicates whether v \in V is a bigram
+        F = [] % Term Frequencies
         TfIdf = []
         EmptyLines = [];
         Y = []
@@ -87,13 +88,15 @@ classdef DocumentSet < handle
             if isempty(obj.W)
                 obj.wordCountMatrix();
             end
+            
             w = obj.W;
             f = full(sum(w));
             w(w>0) = 1;
             d = full(sum(w));
             p = full(sum(w(obj.Y==1,:)));
             n = d - p;
-            F = table(obj.V, f', d', p', n', 'VariableNames', {'Term', 'Frequency', 'Docs', 'PDocs', 'NDocs'});
+            obj.F = table(obj.V, f', d', p', n', 'VariableNames', {'Term', 'Frequency', 'Docs', 'PDocs', 'NDocs'});
+            F = obj.F;
         end
         
         function V = extractVocabulary(obj)
@@ -120,11 +123,6 @@ classdef DocumentSet < handle
         end
         
         function W = wordCountMatrix(obj)
-            
-            if nargin < 2
-                keepUnigrams = false;
-            end
-            
             if isempty(obj.I)
                 obj.terms2Indexes();
             end
@@ -152,17 +150,17 @@ classdef DocumentSet < handle
                 keep_n = NaN;
             end
             
-            F = obj.termFrequencies();
-            s = F.Frequency >= minf & F.Frequency <= maxf;
+            Fr = obj.termFrequencies();
+            s = Fr.Frequency >= minf & Fr.Frequency <= maxf;
             
-            F = F(s,:);
+            Fr = Fr(s,:);
             
             if ~isnan(keep_n) && ~isinf(keep_n)
-                [~, ii] = sort(F.Frequency, 'descend');
-                F = F(ii(1:keep_n),:);
+                [~, ii] = sort(Fr.Frequency, 'descend');
+                Fr = Fr(ii(1:keep_n),:);
             end
             
-            ids = cellfun(@(x) find(strcmp(x, obj.V)), F.Term);
+            ids = cellfun(@(x) find(strcmp(x, obj.V)), Fr.Term);
             %FT = cellfun(@(x) obj.V(x), fids, 'UniformOutput', false, 'ErrorHandler', @(x) fprintf('%d\n', x) );
             
             FT = cell(size(obj.T));

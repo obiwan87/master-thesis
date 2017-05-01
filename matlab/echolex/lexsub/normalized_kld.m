@@ -1,12 +1,8 @@
-function [ K ] = normalized_kld( EW, onlyWord2Vec)
+function [ K ] = normalized_kld( F, Y )
 %NORMALIZED_KLD Summary of this function goes here
 %   Detailed explanation goes here
 
-if nargin < 2
-    onlyWord2Vec = true;
-end
-
-K = kullback_leibler_divergence(EW, onlyWord2Vec);
+K = kullback_leibler_divergence(F,Y);
 K(K<0) = 0;
 pd = fitdist(K(:), 'exponential');
 lambda = pd.mu^-1;
