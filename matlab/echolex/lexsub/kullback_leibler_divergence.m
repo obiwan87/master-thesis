@@ -1,5 +1,7 @@
 function D = kullback_leibler_divergence(W, onlyWord2Vec)
 
+% Calculates the symmetric kullback_leibler_divergence: 
+% P(w_s)*D(P(C|w_s)||P(C|w_s v w_t)) + P(w_t)*D(P(C|w_t)||P(C|w_s v w_t))
 if nargin < 2
     onlyWord2Vec = false;
 end
@@ -26,10 +28,12 @@ wordPosteriors = (wordPriorsPerClass./sum(wordPriorsPerClass.*priors,2)).*priors
 oneOverPairwisePriorsSum = wordPriors + wordPriors';
 oneOverPairwisePriorsSum = 1./oneOverPairwisePriorsSum;
 
-w1orw2_p = wordPriors.*wordPosteriors(:,1) + wordPriors'.*wordPosteriors(:,1)';
+w1orw2_p = wordPriors.*wordPosteriors(:,1); %+ wordPriors'.*wordPosteriors(:,1)';
+w1orw2_p = w1orw2_p + w1orw2_p';
 w1orw2_p = oneOverPairwisePriorsSum.*w1orw2_p; 
 
-w1orw2_n = wordPriors.*wordPosteriors(:,2) + wordPriors'.*wordPosteriors(:,2)';
+w1orw2_n = wordPriors.*wordPosteriors(:,2); % + wordPriors'.*wordPosteriors(:,2)';
+w1orw2_n = w1orw2_n + w1orw2_n';
 w1orw2_n = oneOverPairwisePriorsSum.*w1orw2_n;
 
 D1 = log2(single(wordPosteriors(:,1)))- log2(single(w1orw2_p));

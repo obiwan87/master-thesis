@@ -11,7 +11,7 @@ uni_w2v_ref_i   = unigrams_w2v_index(m, ngrams_ref);
 uni_w2v_query_i = unigrams_w2v_index(m, ngrams_query);
 
 uni_dists = unigrams_pdist2(m, uni_ref, uni_w2v_ref_i, uni_query, uni_w2v_query_i);
-ngram_dists = zeros(size(ngrams_ref,1), size(ngrams_ref,1), N);
+ngram_dists = zeros(size(ngrams_ref,1), size(ngrams_query,1), N);
 
 for i=1:N
     uni_dist = uni_dists{i};
@@ -92,8 +92,8 @@ for i=1:N
 end
 end
 
-function [bigrams] = fetch_ngrams(ngrams)
+function [ngrams] = fetch_ngrams(ngrams)
 
-bigrams = cellstr(string(ngrams).split('_'));
+ngrams = cellstr(string(ngrams).split('_'));
 
 end

@@ -67,7 +67,7 @@ classdef DocumentSet < handle
         
         function B = findBigrams(obj)            
             bigrams_ = cellfun(@(x) strsplit(x, '_'), obj.V, 'UniformOutput', false);
-            B = cellfun(@(x) numel(x) == 2, bigrams_);            
+            B = cellfun(@(x) numel(x), bigrams_);            
             obj.B = B;
         end
         
