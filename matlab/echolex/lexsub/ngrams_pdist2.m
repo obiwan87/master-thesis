@@ -66,13 +66,9 @@ for i=1:N
     ii = sub2ind(size(uni_dist_rest), ia, ib);
     uni_dist_rest(ii) = 0;
     
-    uni_dist_buff = Inf(size(u_ref,1), size(u_query,1));    
-    uni_dist_buff(1:size(uni_dist_w2v,1),1:size(uni_dist_w2v,2)) = uni_dist_w2v;
-    uni_dist_buff(size(uni_dist_w2v,1)+1:end,size(uni_dist_w2v,2)+1:end) = uni_dist_rest;
-    
-    uni_dist = inf(size(u_ref,1), size(u_query,1));    
-    uni_dist(nz_w2v_ref,nz_w2v_query) = uni_dist_buff(1:size(uni_dist_w2v,1),1:size(uni_dist_w2v,2));
-    uni_dist(z_w2v_ref, z_w2v_query) = uni_dist_buff(size(uni_dist_w2v,1)+1:end,size(uni_dist_w2v,2)+1:end);
+    uni_dist = Inf(size(u_ref,1), size(u_query,1));    
+    uni_dist(nz_w2v_ref,nz_w2v_query) = uni_dist_w2v;
+    uni_dist(z_w2v_ref,z_w2v_query) = uni_dist_rest;   
     
     uni_dists{i} = uni_dist;
 end

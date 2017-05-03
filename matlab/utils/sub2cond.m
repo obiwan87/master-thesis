@@ -5,13 +5,13 @@ function [ c ] = sub2cond( S, row, col)
 assert(S(1) == S(2));
 
 n = S(1);
-sub = [row col];
-sub = sort(sub, 'descend');
+sub = [row' col'];
+sub = sort(sub, 2, 'descend');
 
-i = sub(1);
-j = sub(2);
+i = sub(:,1);
+j = sub(:,2);
 
-c = sum((n-j+1):(n-1))+(i-j);
+c = i -j/2.*(j + 1)+ n.*(j-1);
 
 end
 

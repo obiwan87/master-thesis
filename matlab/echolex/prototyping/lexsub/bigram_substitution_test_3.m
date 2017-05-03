@@ -153,9 +153,7 @@ for lj=1:numel(folds)
             end
             
             % Map unseen words to clostest cluster
-            substitutionMap2 = nearest_cluster_substitution_ngrams(trD_bi.m, teV, trV, trF, ...
-                     clusters, clusterWordMap, ...
-                     'Method', methodNearestClusterAssignment, 'MaxDistance', maxDistance);
+            substitutionMap2 = nearest_cluster_substitution_ngrams(trD_bi.m, teV, trV, trF, clusters, clusterWordMap, 'Method', methodNearestClusterAssignment, 'MaxDistance', maxDistance);
             
             % Apply both substitutions to test set
             substitutionMap = [substitutionMap1; substitutionMap2];

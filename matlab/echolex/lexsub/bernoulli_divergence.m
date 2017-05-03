@@ -1,16 +1,6 @@
-function [ B ] = bernoulli_divergence( W, onlyWord2Vec )
+function [ B ] = bernoulli_divergence( F )
 %BERNOULLI_DIVERGENCE Summary of this function goes here
 %   Detailed explanation goes here
-
-if nargin < 2
-    onlyWord2Vec = true;    
-end
-
-F = W.termFrequencies();
-
-if onlyWord2Vec
-    F = F(W.Vi~=0,:);
-end
 
 K = F.PDocs + 1;
 N = K + F.NDocs + 1;
