@@ -1,6 +1,3 @@
-for lk = 7
-N = 2;
-
 W = Ws{lk};
 
 EW = W;
@@ -141,14 +138,22 @@ for ll = 1:runs
             
             F = trD_bi.termFrequencies();
             trF_bi = F(trD_bi.ViCount >= 1 & trD_bi.B==2,:);            
+<<<<<<< HEAD
             dist_bi = ngrams_pdist(trD_bi.m, trV_bi, 2);
+=======
+            dist_bi = words_pdist2(trD_bi.m, trV_bi, trV_bi);
+>>>>>>> 922760cc9004bf5f4c8966990f0058081522d6c8
             
             % Extract unigrams in word2vec model
             trV_uni = trD_bi.V(trD_bi.ViCount >= 1 & trD_bi.B==1);
             teV_uni = teD_bi.V(teD_bi.ViCount >= 1 & teD_bi.B==1);
                         
             trF_uni = F(trD_bi.ViCount >= 1 & trD_bi.B==1,:);            
+<<<<<<< HEAD
             dist_uni = ngrams_pdist(trD_bi.m, trV_uni, 1);
+=======
+            dist_uni = words_pdist2(trD_bi.m, trV_uni, trV_uni);
+>>>>>>> 922760cc9004bf5f4c8966990f0058081522d6c8
             
             if strcmp(divergence,'bernoulli')
                 pL_bi = bernoulli_divergence(trF_bi);
@@ -317,4 +322,3 @@ for ll = 1:runs
     all_accs_t = all_results_t(:,[1:6 all_accs_t_fields']);
 end
 save(sprintf('business-signal-%d.mat',lk), 'all_results_t', 'all_accs_t');
-end
