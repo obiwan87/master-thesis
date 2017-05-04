@@ -10,10 +10,9 @@ N_ref = cellfun(@(x) numel(x), ngrams_ref);
 ngrams_query = cellfun(@(x) strsplit(x, '_'), V_query, 'UniformOutput', false);
 N_query = cellfun(@(x) numel(x), ngrams_query);
 
-
 n = unique(N_ref);
 
-D = inf(numel(V_ref), numel(V_query));
+D = inf(numel(V_ref), numel(V_query), 'single');
 
 for i=1:numel(n)
     pos_ref = N_ref==n(i);

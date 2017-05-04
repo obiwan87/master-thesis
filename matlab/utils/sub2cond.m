@@ -2,7 +2,10 @@ function [ c ] = sub2cond( S, row, col)
 %SUB2COND Summary of this function goes here
 %   Detailed explanation goes here
 
-assert(S(1) == S(2));
+if isempty(row)
+    c = [];    
+    return 
+end
 
 n = S(1);
 sub = [row' col'];

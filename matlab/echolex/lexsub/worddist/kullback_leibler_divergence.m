@@ -3,13 +3,12 @@ function D = kullback_leibler_divergence(F,Y)
 % Calculates the symmetric kullback_leibler_divergence: 
 % P(w_s)*D(P(C|w_s)||P(C|w_s v w_t)) + P(w_t)*D(P(C|w_t)||P(C|w_s v w_t))
 
+nV = single(size(F,1));
 
-nV = size(F,1);
+K_P = single(F.PDocs);
+K_N = single(F.NDocs);
 
-K_P = F.PDocs;
-K_N = F.NDocs;
-
-wordPriorsPerClass = zeros(nV,2);
+wordPriorsPerClass = zeros(nV,2,'single');
 wordPriorsPerClass(:,1) = (1+K_P)./(numel(nV) + sum(K_P));
 wordPriorsPerClass(:,2) = (1+K_N)./(numel(nV) + sum(K_N));
 
