@@ -1,7 +1,7 @@
 function D = words_pdist2(m, V_ref, V_query, aggFcn)
 
 if nargin < 4
-    aggFcn = @(X) max(X, [], 3);
+    aggFcn = @(X) max(X, [], 1);
 end
 
 ngrams_ref = cellfun(@(x) strsplit(x, '_'), V_ref, 'UniformOutput', false);
@@ -21,10 +21,7 @@ for i=1:numel(n)
     n_ref = V_ref(pos_ref);
     n_query = V_query(pos_query);
     
-    dist = ngrams_pdist2(m,n_ref,n_query,n(i));
-    dist = aggFcn(dist);
-    
-    D(pos_ref, pos_query) = dist;
+    D(pos_ref, pos_query) = ngrams_pdist2(m,n_ref,n_query,n(i),aggFcn);
 end
 
 end

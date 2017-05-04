@@ -13,8 +13,7 @@ for i=1:N
     [~, ia, u_w2v_i] = intersect(uni, m.Terms);
     uni_w2v_i(ia) = u_w2v_i;
     
-    unigrams_w2v_i{i} = uni_w2v_i;        
-    
+    unigrams_w2v_i{i} = uni_w2v_i;            
     ngrams_w2v_i(:,i) = uni_w2v_i(ngrams_i(:,i));
     
     c = zeros(size(uni));

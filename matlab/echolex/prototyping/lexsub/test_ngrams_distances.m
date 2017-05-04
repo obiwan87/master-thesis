@@ -32,8 +32,11 @@ tic
 D1 = squareform(ngrams_pdist(W.m, V, 2));
 toc
 tic
-D2 = max(ngrams_pdist2(W.m, V, V, 2), [], 3);
+D2 = ngrams_pdist2(W.m, V, V, 2);
 D2(D2<10^-6) = 0;
 toc
 
-sum(D1(:)~=D2(:))
+tic
+D3 = words_pdist2(W.m, V,V);
+D3(D3<10^-6) = 0;
+toc
