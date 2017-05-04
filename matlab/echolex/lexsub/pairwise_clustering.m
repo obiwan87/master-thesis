@@ -16,7 +16,7 @@ b = params.ScoreFunctionParam2;
 
 dist_p = scoreFunction(pL_,dist_u,a,b);
 
-Z = linkage(dist_p, linkage_param);
+Z = linkage(squareform(dist_p), linkage_param);
 clusters = cluster(Z, 'cutoff', cutoff, 'criterion', mergeCriterion );
 
 end

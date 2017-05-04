@@ -3,17 +3,31 @@ function [ B ] = bernoulli_divergence( F )
 %   Detailed explanation goes here
 
 K = F.PDocs + 1;
-N = K + F.NDocs + 1;
-P = single(K./N);
+J = F.NDocs + 1;
+N = K + J;
+P = K./N;
+L = P.^K;
+L = L.*(1-P).^J;
 
-L = P.^K.*(1-P).^(N-K);
-L = pdist(L, @times);
+from = 1;
+C = size(F,1);
+B = zeros(C*(C-1)/2, 1, 'single');
 
-k = pdist(K, @plus);
-n = pdist(N, @plus);
-P_ = k./n;
-L_ = P_.^k.*(1-P_).^(n-k);
-B = L_ ./ (L + L_);
-B = 1-2*B;
+for i=1:C-1
+     to = from + C - i - 1;
+    
+     % Merged probs
+     k = K(i) + K(i+1:end);     
+     j = J(i) + J(i+1:end);
+     n = j + k;
+     
+     Ls = L(i) .* L(i+1:end);
 
+     p = k./n;
+     l = p.^k.*(1-p).^j;     
+     b  = l ./ (Ls + l);
+     b = 1 - 2*b;
+     B(from:to) = b;
+     from = to + 1;
+end
 end

@@ -1,3 +1,5 @@
+lk = 7;
+N = 2;
 W = Ws{lk};
 
 EW = W;
@@ -6,6 +8,7 @@ EW.wordCountMatrix();
 ngramsEW = BigramFinder.generateAllNGrams(EW,N,true);
 ngramsEW.wordCountMatrix();
 ngramsEW.findBigrams();
+ngramsEW.w2vCount();
 
 results_fields = ...
     {'holdout', ...
@@ -68,6 +71,15 @@ all_results_t = cell2table(cell(0,numel(results_fields)),'VariableNames', result
 [~, ~, all_accs_t_fields] = intersect(results_fields_acc, results_fields, 'stable');
 all_accs_t = all_results_t(:,[1:6 all_accs_t_fields']);
 rng default
+
+% Pre-Compute distance matrices
+fprintf('Calculating distance matrices (w2v) ... \n');
+V_bi = ngramsEW.V(ngramsEW.ViCount >= 1 & ngramsEW.B==2);
+V_uni = ngramsEW.V(ngramsEW.ViCount >= 1 & ngramsEW.B==1);
+
+dist_uni = squareform(ngrams_pdist(ngramsEW.m, V_uni, 1));
+dist_bi = squareform(ngrams_pdist(ngramsEW.m, V_bi, 2));
+
 for ll = 1:runs
     curr = rng;
     for lj=1:numel(folds)
@@ -114,6 +126,7 @@ for ll = 1:runs
             [trD_bi,  teD_bi ] = ngramsEW.split(testIdx, trainingIdx);
             vocSizeOrigs_bi(i)  = numel(ngramsEW.V);
             
+            
             %% Original Documents
             
             [acc1_bi, p_both] = trainTestNB(ngramsEW, bigramsWC, trainingIdx, testIdx);
@@ -130,34 +143,33 @@ for ll = 1:runs
             teD_bi.w2vCount();
             
             % Extract bigams with at least one word in word2vec model
+
+            %Free Memory
+            clear pL_bi pL_uni
+            
+            % Extract bigams with at least one word in word2vec model
             trV_bi = trD_bi.V(trD_bi.ViCount >= 1 & trD_bi.B==2);
             teV_bi = teD_bi.V(teD_bi.ViCount >= 1 & teD_bi.B==2);
-            
-            %Free Memory
-            clear dist_bi dist_uni pL_bi pL_uni
-            
+                        
             F = trD_bi.termFrequencies();
             trF_bi = F(trD_bi.ViCount >= 1 & trD_bi.B==2,:);            
-<<<<<<< HEAD
-            dist_bi = ngrams_pdist(trD_bi.m, trV_bi, 2);
-=======
-            dist_bi = words_pdist2(trD_bi.m, trV_bi, trV_bi);
->>>>>>> 922760cc9004bf5f4c8966990f0058081522d6c8
             
             % Extract unigrams in word2vec model
             trV_uni = trD_bi.V(trD_bi.ViCount >= 1 & trD_bi.B==1);
             teV_uni = teD_bi.V(teD_bi.ViCount >= 1 & teD_bi.B==1);
                         
-            trF_uni = F(trD_bi.ViCount >= 1 & trD_bi.B==1,:);            
-<<<<<<< HEAD
-            dist_uni = ngrams_pdist(trD_bi.m, trV_uni, 1);
-=======
-            dist_uni = words_pdist2(trD_bi.m, trV_uni, trV_uni);
->>>>>>> 922760cc9004bf5f4c8966990f0058081522d6c8
+            trF_uni = F(trD_bi.ViCount >= 1 & trD_bi.B==1,:);  
+            
+            %% Subset of words used in these folds
+            [~, bi_subset] = intersect(V_bi, trV_bi);
+            [~, uni_subset] = intersect(V_uni, trD_bi.V);
+            
+            dist_bi_subset = dist_bi(bi_subset,bi_subset);
+            dist_uni_subset = dist_uni(uni_subset,uni_subset);
             
             if strcmp(divergence,'bernoulli')
-                pL_bi = bernoulli_divergence(trF_bi);
-                pL_uni = bernoulli_divergence(trF_uni);
+                pL_bi = squareform(bernoulli_divergence(trF_bi));
+                pL_uni = squareform(bernoulli_divergence(trF_uni));
             else
                 pL_bi = normalized_kld(trF_bi, trD_bi.Y);
                 pL_uni = normalized_kld(trF_uni, trD_bi.Y);
@@ -178,7 +190,7 @@ for ll = 1:runs
                 %% Calculate substitutions only on Bigrams
                 
                 % Create substitution model
-                clusters_bi = pairwise_clustering(dist_bi, pL_bi, 'Linkage', linkag, 'Cutoff', cutoff, 'ScoreFunction', scoreFunction, 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', b);
+                clusters_bi = pairwise_clustering(dist_bi_subset, pL_bi, 'Linkage', linkag, 'Cutoff', cutoff, 'ScoreFunction', scoreFunction, 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', b);
                 
                 % Get new training model
                 [substitutionMap1, clusterWordMap_bi] = apply_cluster_substitutions2(trF_bi, clusters_bi);                
@@ -191,7 +203,7 @@ for ll = 1:runs
                  %% Calculate substitutions only on Unigrams
                 
                 % Create substitution model
-                clusters_uni = pairwise_clustering(dist_uni, pL_uni, 'Linkage', linkag, 'Cutoff', cutoff, 'ScoreFunction', scoreFunction, 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', b);
+                clusters_uni = pairwise_clustering(dist_uni_subset, pL_uni, 'Linkage', linkag, 'Cutoff', cutoff, 'ScoreFunction', scoreFunction, 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', b);
                 
                 % Get new training model
                 [substitutionMap3, clusterWordMap_uni] = apply_cluster_substitutions2(trF_uni, clusters_uni);
