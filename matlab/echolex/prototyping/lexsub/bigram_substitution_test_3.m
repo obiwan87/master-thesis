@@ -1,4 +1,4 @@
-lk = 7;
+lk = 2;
 N = 2;
 W = Ws{lk};
 
@@ -42,12 +42,12 @@ evaluateSubstitutionAppending = false;
 
 
 %% Parameters
-cutoffs = [0.2 0.3 0.4];
-as = [0 0.1 0.2 0.3];%[0 0.05 0.1 0.2];
+cutoffs = [0.1 0.15 0.2 0.25];
+as = [0.05 0.1 0.2 0.3 0.4 0.5];%[0 0.05 0.1 0.2];
 scoreFunction = @(pL_,dists,a,b) pL_*a + dists/2*b;
 %scoreFunction = @(pL_,dists,a,b) minkowski(cat(3,1-2*pL_,dists/2),a,3);
 %scoreFunction = @(pL_,dists,a,b) max(cat(3,pL_,dists/2),[],3);
-maxDistances = [0.4 0.5 0.6];
+maxDistances = 0.6;
 divergence = 'bernoulli';
 linkages = {'complete'};
 methodNearestClusterAssignment = 'average';
@@ -164,9 +164,6 @@ for ll = 1:runs
             [~, bi_subset] = intersect(V_bi, trV_bi);
             [~, uni_subset] = intersect(V_uni, trD_bi.V);
             
-            dist_bi_subset = dist_bi(bi_subset,bi_subset);
-            dist_uni_subset = dist_uni(uni_subset,uni_subset);
-            
             if strcmp(divergence,'bernoulli')
                 pL_bi = squareform(bernoulli_divergence(trF_bi));
                 pL_uni = squareform(bernoulli_divergence(trF_uni));
@@ -190,7 +187,7 @@ for ll = 1:runs
                 %% Calculate substitutions only on Bigrams
                 
                 % Create substitution model
-                clusters_bi = pairwise_clustering(dist_bi_subset, pL_bi, 'Linkage', linkag, 'Cutoff', cutoff, 'ScoreFunction', scoreFunction, 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', b);
+                clusters_bi = pairwise_clustering(dist_bi(bi_subset,bi_subset), pL_bi, 'Linkage', linkag, 'Cutoff', cutoff, 'ScoreFunction', scoreFunction, 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', b);
                 
                 % Get new training model
                 [substitutionMap1, clusterWordMap_bi] = apply_cluster_substitutions2(trF_bi, clusters_bi);                
@@ -203,7 +200,7 @@ for ll = 1:runs
                  %% Calculate substitutions only on Unigrams
                 
                 % Create substitution model
-                clusters_uni = pairwise_clustering(dist_uni_subset, pL_uni, 'Linkage', linkag, 'Cutoff', cutoff, 'ScoreFunction', scoreFunction, 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', b);
+                clusters_uni = pairwise_clustering(dist_uni(uni_subset,uni_subset), pL_uni, 'Linkage', linkag, 'Cutoff', cutoff, 'ScoreFunction', scoreFunction, 'ScoreFunctionParam1', a, 'ScoreFunctionParam2', b);
                 
                 % Get new training model
                 [substitutionMap3, clusterWordMap_uni] = apply_cluster_substitutions2(trF_uni, clusters_uni);
@@ -333,4 +330,4 @@ for ll = 1:runs
     all_results_t = [all_results_t; cell2table(vertcat(all_results{:}),'VariableNames', results_fields)];
     all_accs_t = all_results_t(:,[1:6 all_accs_t_fields']);
 end
-save(sprintf('business-signal-%d.mat',lk), 'all_results_t', 'all_accs_t');
+%save(sprintf('business-signal-%d.mat',lk), 'all_results_t', 'all_accs_t');

@@ -34,8 +34,9 @@ for j=1:ngramsCount-1
             range1 = range(q) - from + 1;
             query = other(q)';
 
-            ii = sub2cond(S1, repmat(r, 1, numel(query)), query);            
+            ii = sub2cond(S1, repmat(double(r), 1, numel(query)), double(query));     
             d(i,range1) = uni_dists{i}(ii);
+
 
         end
         r = n_i(j,i);
