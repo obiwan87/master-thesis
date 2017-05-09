@@ -11,7 +11,7 @@ L = L.*(1-P).^J;
 
 from = 1;
 C = size(F,1);
-B = zeros(C*(C-1)/2, 1, 'single');
+B = zeros(1, C*(C-1)/2, 'single');
 
 for i=1:C-1
      to = from + C - i - 1;

@@ -10,7 +10,7 @@ maxDistance = params.MaxDistance;
 
 % Unseen words
 unseenWords = setdiff(query_V, ref_V);
-
+fprintf('Unseen Words: %d \n', numel(unseenWords));
 if strcmp(method, 'min')
     f = @(x) min(x,[],2);
 elseif strcmp(method, 'max')
