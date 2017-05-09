@@ -16,7 +16,7 @@ b = params.ScoreFunctionParam2;
 
 dist_p = scoreFunction(pL_,dist_u,a,b);
 
-Z = linkage(squareform(dist_p), linkage_param);
+Z = linkage(dist_p, linkage_param);
 clusters = cluster(Z, 'cutoff', cutoff, 'criterion', mergeCriterion );
 
 end
@@ -27,7 +27,7 @@ p.KeepUnmatched = true;
 
 % Algorithm Parameters
 addParameter(p, 'MaxDistance', 0.8, @(x) x > 0);
-addParameter(p, 'ScoreFunction', @(pL_,dists,a,b) pL_*a + dists*b, @(x) isa(x, 'function_handle'));
+addParameter(p, 'ScoreFunction', @(pL_,dists,a,b) pL_*a + dists/2*b, @(x) isa(x, 'function_handle'));
 addParameter(p, 'ScoreFunctionParam1', 0.5, @(x) true);
 addParameter(p, 'ScoreFunctionParam2', 0.5, @(x) true);
 addParameter(p, 'Cutoff', 0.2, @(x) isscalar(x));

@@ -1,4 +1,4 @@
-function D = kullback_leibler_divergence(F,Y)
+function [D, wordPosteriors] = kullback_leibler_divergence(F,Y)
 
 % Calculates the symmetric kullback_leibler_divergence: 
 % P(w_s)*D(P(C|w_s)||P(C|w_s v w_t)) + P(w_t)*D(P(C|w_t)||P(C|w_s v w_t))
