@@ -5,6 +5,7 @@ classdef DocumentSet < handle
     
     properties
         Filename = '' % Source Filename
+        DatasetName = ''; % Name of dataset
         T = [] % Documents
         V = [] % Vocabulary of Document Set
         I = [] % Document-Matrix with Words as indexes of V

@@ -1,5 +1,5 @@
-lk = 2;
-N = 2;
+lk = 7;
+N = 1;
 W = Ws{lk};
 
 EW = W;
@@ -36,15 +36,7 @@ evaluateSubstitutionAppending = false;
 
 
 %% Parameters
-% cutoffs = [0.3];% 0.3 0.4];
-% a1 = 0; 
-% a2 = 0:0.1:0.5;
-% a3 = 0:0.1:0.5; 
-% a4 = 0:0.1:0.5;
-% as = [0];% 0.1 0.2 0.3];%[0 0.05 0.1 0.2];
 scoreFunction = @(pL_,dists,a,b) pL_*a + dists/2*b;
-%scoreFunction = @(pL_,dists,a,b) minkowski(cat(3,1-2*pL_,dists/2),a,3);
-%scoreFunction = @(pL_,dists,a,b) max(cat(3,pL_,dists/2),[],3);
 maxDistances = [0.6];
 divergence = 'bernoulli';
 linkages = {'complete'};
@@ -139,10 +131,7 @@ for ll = 1:runs
             trD_bi.w2vCount();
             teD_bi.w2vCount();
             F = trD_bi.termFrequencies();
-            
-            %Free Memory
-            clear pL_bi pL_uni
-            
+                       
             % Extract bigams with at least one word in word2vec model
             trVs = cell(N,1);
             teVs = cell(N,1);

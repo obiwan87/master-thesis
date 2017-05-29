@@ -37,7 +37,7 @@ for i=1:C-1
      % Compute priors of model 
      if weighted
          d = D(from:to)/2;
-         d = a*d + 1/2*(1-a);
+         d = a*(d - 0.5) + 0.5;
      else
          d = 0.5;
      end
