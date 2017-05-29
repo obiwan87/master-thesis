@@ -47,3 +47,9 @@ for i=1:size(params_ngrams,1)
        param_combinations{i,j}(N) = params_ngrams(i,j);
    end
 end
+
+
+for i = 1:7
+    Ws{i}.DatasetName
+    Ws{i}.T{1}
+end
