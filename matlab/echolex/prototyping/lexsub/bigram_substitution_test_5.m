@@ -22,41 +22,54 @@ results_fields = ...
 results_fields_acc = {'mean_acc_orig_nb', 'mean_acc_sub_n_nb', 'mean_acc_orig_svm', 'mean_acc_sub_n_svm'};
 param_fields = 1:6;
 
+%dtstamp = char(datetime);
+%dtstamp = strrep(dtstamp, ':', '');
+%results_dir_path = fullfile(echolex_dumps, dtstamp);
+%mkdir(results_dir_path);
 
 %% Some general clustering parameters
 methodNearestClusterAssignment = 'min';
 
 %% Evaluation
-folds = 2;
-runs = 1;
+folds = 10;
+runs = 3;
 
 %% LexSub parameters combinations
 
 scoreFunction = @bayes_hypothesis_probability;
 
 % Find best parameter combination of N-1-Grams
-cutoffs = 0.3:0.1:0.5; %
-as = 0.2:0.2:1; %  Prior weight
-bs = 1; % lin comb. weight
-max_distances = 0.5:0.1:0.7;
+cutoffs = 0.4; %
+as = 0.25:0.25:1; %  Prior weight
+bs = [0 0.5 1]; % lin comb. weight
+max_distances = 0.65;
 params_ngrams = allcomb(cutoffs,as,bs,max_distances);
+
+b0 = params_ngrams(params_ngrams(:,3) == 0,:);
+b0(:,2) = 0;
+b0 = unique(b0, 'rows');
+
+params_ngrams(params_ngrams(:,3) == 0,:) = [];
+params_ngrams = [params_ngrams; b0];
 
 %% Iterate through datasets
 
 %Size of N-Grams?
-maxN = 3;
+minN = 2;
+maxN = 2;
 
 for lk=1:numel(Ws)
+    clear pLs
     W = Ws{lk};
     EW = W;
     EW.wordCountMatrix();
     
-    for N=1:maxN
+    for N=minN:maxN
        
         %% Parameters 
         if N > 1
             results_filename = sprintf('%s-%d-grams.mat',EW.DatasetName,N-1);
-            load(results_filename);
+            load(fullfile(results_dir_path, results_filename));
             [TID, ~, groups] = unique(all_accs_t(:,2:5));
             
             acc = splitapply(@mean, all_accs_t.mean_acc_sub_n_svm , groups);
@@ -193,7 +206,7 @@ for lk=1:numel(Ws)
                     test_substitution_map_cache = [];
                     training_substitution_map_cache = [];
                     for li = 1:size(param_combinations,1)
-                        fprintf('Fold: %d/%d, Parameter Combination: %d/%d \n \n', i, abs(fold), li, size(param_combinations,1));
+                        fprintf('Dataset: %s, Run: %d/%d, N: %d, Fold: %d/%d, Parameter Combination: %d/%d \n \n', EW.DatasetName, ll,runs,N,i, abs(fold), li, size(param_combinations,1));
                         linkag = 'complete';
                         
                         training_substitution_map = training_substitution_map_cache;
@@ -297,7 +310,7 @@ for lk=1:numel(Ws)
                     cutoff = param_combinations{li,1};
                     a = param_combinations{li,2};
                     b = param_combinations{li,3};
-                    maxDistance = param_combinations{li,3};
+                    maxDistance = param_combinations{li,4};
                     
                     results(li,:) = ...
                         {folds(lj), ...
@@ -326,6 +339,6 @@ for lk=1:numel(Ws)
             all_accs_t = all_results_t(:,[param_fields all_accs_t_fields']);
         end
         results_filename = sprintf('%s-%d-grams.mat',EW.DatasetName,N);
-        save(results_filename, 'all_results_t', 'all_accs_t');
+        save(fullfile(results_dir_path, results_filename), 'all_results_t', 'all_accs_t');
     end
 end

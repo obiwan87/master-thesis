@@ -125,15 +125,18 @@ classdef BigramFinder < NGramFinder
                 keepUnigrams = false;
             end
             
-            startToken = '*start*';
-            endToken = '*end*';
+            startTokenTemplate = '*start*%d';
+            endTokenTemplate = '*end*%d';
             
             T = cell(size(D.T));
             for i = 1:numel(D.T)
                 sentence = D.T{i};   
-                sentence = [startToken sentence endToken]; %#ok<AGROW>
+                 
                 T{i} = D.T{i};
                 for N=2:n
+                    startToken = sprintf(startTokenTemplate, N);
+                    endToken = sprintf(endTokenTemplate, N);
+                    sentence = [startToken sentence endToken];%#ok<AGROW>
                     ngrams_sentence = BigramFinder.calculateNGrams(sentence, N);                    
                     if keepUnigrams
                         T{i} = [T{i} ngrams_sentence];
