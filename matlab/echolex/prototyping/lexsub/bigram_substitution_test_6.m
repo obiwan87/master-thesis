@@ -9,19 +9,35 @@ results_fields = ...
     'voc_size_orig', ...
     'mean_acc_orig_nb', ...
     'std_acc_orig_nb', ...
+    'precision_orig_nb', ...
+    'std_precision_orig_nb', ...
+    'recall_orig_nb', ...
+    'std_recall_orig_nb', ...
     'mean_posterior_orig_nb', ...
     'mean_acc_orig_svm', ...
     'std_acc_orig_svm', ...
+    'precision_orig_svm', ...
+    'std_precision_orig_svm', ...
+    'recall_orig_svm', ...
+    'std_recall_orig_svm', ...
     'voc_size_sub_n', ...
     'mean_acc_sub_n_nb', ...
     'std_acc_sub_n_nb', ...
+    'precision_sub_n_nb', ...
+    'std_precision_sub_n_nb', ...
+    'recall_sub_n_nb', ...
+    'std_recall_sub_n_nb', ...
     'mean_posterior_sub_n_nb',...
     'mean_acc_sub_n_svm', ...
     'std_acc_sub_n_svm', ...
+    'precision_sub_n_svm', ...
+    'std_precision_sub_n_svm', ...
+    'recall_sub_n_svm', ...
+    'std_recall_sub_n_svm', ...
     };
 results_fields_acc = {'mean_acc_orig_nb', 'mean_acc_sub_n_nb', 'mean_acc_orig_svm', 'mean_acc_sub_n_svm'};
 param_fields = 1:6;
-prefix = 'lincomb_25_all';
+prefix = 'results_test_run';
 %dtstamp = char(datetime);
 %dtstamp = strrep(dtstamp, ':', '');
 %results_dir_path = fullfile(echolex_dumps, prefix, dtstamp);
@@ -32,8 +48,8 @@ mkdir(results_dir_path);
 methodNearestClusterAssignment = 'min';
 
 %% Evaluation
-folds = -4;
-runs = 3;
+folds = 10;
+runs = 1;
 
 %% LexSub parameters combinations
 
@@ -53,13 +69,14 @@ b0 = unique(b0, 'rows');
 params_ngrams(params_ngrams(:,3) == 0,:) = [];
 params_ngrams = [params_ngrams; b0];
 
-load(fullfile(echolex_dumps, 'params_unigrams_all.mat'));
+load(fullfile(echolex_dumps, 'params_bigrams_all.mat'));
+% params_ngrams = [0.250000000000000 1 0.300000000000000 0];
 
 %% Iterate through datasets
 
 %Size of N-Grams?
-minN = 1;
-maxN = 1;
+minN = 2;
+maxN = 2;
 
 for lk=1:numel(Ws)
     clear pLs
@@ -152,11 +169,22 @@ for lk=1:numel(Ws)
                 
                 accuracies1_bi = zeros(abs_fold,1);
                 accuracies1_bi_svm = zeros(abs_fold,1);
+                
+                precisions_bi = zeros(abs_fold,1);
+                precisions_bi_svm = zeros(abs_fold,1);
+                recalls_bi = zeros(abs_fold,1);
+                recalls_bi_svm = zeros(abs_fold,1);
+                
                 vocSizeOrigs_bi = zeros(abs_fold,1);
                 
                 % Store results here                
                 accuracies2_n_nb =  zeros(abs_fold, size(param_combinations,1));
-                accuracies2_n_svm =  zeros(abs_fold, size(param_combinations,1));
+                precisions2_n_nb = zeros(abs_fold, size(param_combinations,1));
+                recalls2_n_nb = zeros(abs_fold, size(param_combinations,1));
+                
+                accuracies2_n_svm =  zeros(abs_fold, size(param_combinations,1));                
+                precisions2_n_svm = zeros(abs_fold, size(param_combinations,1));
+                recalls2_n_svm = zeros(abs_fold, size(param_combinations,1));
                 
                 vocSizeSubs_n =  zeros(abs_fold, size(param_combinations,1));
                 p2_n = zeros(abs_fold,size(param_combinations,1));
@@ -183,21 +211,26 @@ for lk=1:numel(Ws)
                     
                     
                     %% Original Documents
-                    [acc1_bi, p] = trainTestNB(ngramsEW, ngramsWC, trainingIdx, testIdx);
+                    [acc1_bi, p, ~, prec_nb_1, rec_nb_1] = trainTestNB(ngramsEW, ngramsWC, trainingIdx, testIdx);
                     p1_bi(i) = p;
                     
-                    acc1_bi_svm = trainTestNBSVM(ngramsEW, trainingIdx, testIdx);
+                    [acc1_bi_svm, ~, ~, prec_nbsvm_1, rec_nbsvm_1] = trainTestNBSVM(ngramsEW, trainingIdx, testIdx);
                     if acc1_bi_svm < 0.65
                         ngramsEW.Y = ~ngramsEW.Y;                        
                         fprintf('Accuracy: %.2f. Too low! Retry: ', acc1_bi_svm*100);
-                        acc1_bi_svm2 = trainTestNBSVM(ngramsEW, trainingIdx, testIdx);
+                        [acc1_bi_svm2, ~, ~, prec_nbsvm_1, rec_nbsvm_1] = trainTestNBSVM(ngramsEW, trainingIdx, testIdx);
                         acc1_bi_svm = max([acc1_bi_svm acc1_bi_svm2]);
                         ngramsEW.Y = ~ngramsEW.Y;
                         fprintf('%.2f \n', acc1_bi_svm*100);
                     end
                     
                     accuracies1_bi(i) = acc1_bi;
+                    precisions_bi(i) = prec_nb_1;
+                    recalls_bi(i) = rec_nb_1;
+                    
                     accuracies1_bi_svm(i) = acc1_bi_svm;
+                    precisions_bi_svm(i) = prec_nbsvm_1;
+                    recalls_bi_svm(i) = rec_nbsvm_1;
                     
                     
                     trD_bi.w2vCount();
@@ -301,21 +334,26 @@ for lk=1:numel(Ws)
                         
                         %% Evaluate clsasification accuracy
                         % MNB
-                        [acc2,p] = trainTestNB(sD,sWC,trainingIdx,testIdx);
+                        [acc2,p,~,prec_nb_2,rec_nb_2] = trainTestNB(sD,sWC,trainingIdx,testIdx);
                         
                         % MNBSVM
                         
-                        acc2_svm = trainTestNBSVM(sD, trainingIdx, testIdx);
+                        [acc2_svm, ~, ~, prec_nbsvm_2, rec_nbsvm_2] = trainTestNBSVM(sD, trainingIdx, testIdx);
                         if acc2_svm < 0.65
                             sD.Y = ~sD.Y;
-                            acc2_svm2 = trainTestNBSVM(sD, trainingIdx, testIdx);
+                            [acc2_svm2, ~, ~, prec_nbsvm_2, rec_nbsvm_2] = trainTestNBSVM(sD, trainingIdx, testIdx);
                             acc2_svm = max([acc2_svm acc2_svm2]);
                         end
                         
                         %% Gather results
                         
                         accuracies2_n_nb(i,li) = acc2;
+                        precisions2_n_nb(i,li) = prec_nb_2;
+                        recalls2_n_nb(i,li) = rec_nb_2;
+                        
                         accuracies2_n_svm(i,li) = acc2_svm;
+                        precisions2_n_svm(i,li) = prec_nbsvm_2;
+                        recalls2_n_svm(i,li) = rec_nbsvm_2;
                         
                         p2_n(i, li) = p;
                         vocSizeSubs_n(i,li) = numel(sD.V);
@@ -326,12 +364,21 @@ for lk=1:numel(Ws)
                         total_tr = sum(trainingIdx);
                         disp('%%%%%%%%%%%%%%%%% NB %%%%%%%%%%%%%%%%%%%%%%%');
                         fprintf('Accuracy %d-Grams (Orig): %.2f %% (%d/%d) \n', N, acc1_bi*100, int32(acc1_bi*total), total);
-                        fprintf('Accuracy %d-Grams (Sub): %.2f %% (%d/%d) \n', N, acc2*100, int32(acc2*total), total);
+                        fprintf('Precision %d-Grams (Orig): %.2f %% \n', N, prec_nb_1*100);
+                        fprintf('Recall %d-Grams (Orig): %.2f %% \n \n', N, rec_nb_1*100);
                         
+                        fprintf('Accuracy %d-Grams (Sub): %.2f %% (%d/%d) \n', N, acc2*100, int32(acc2*total), total);                                               
+                        fprintf('Precision %d-Grams (Sub): %.2f %% \n', N, prec_nb_2*100);
+                        fprintf('Recall %d-Grams (Sub): %.2f %% \n', N, rec_nb_2*100);
                         
                         disp('%%%%%%%%%%%%%%%%% NB-SVM %%%%%%%%%%%%%%%%%%%');
                         fprintf('Accuracy %d-Grams (Orig): %.2f %% (%d/%d) \n', N, acc1_bi_svm*100, int32(acc1_bi_svm*total), total);
+                        fprintf('Precision %d-Grams (Orig): %.2f %% \n', N, prec_nbsvm_1*100);
+                        fprintf('Recall %d-Grams (Orig): %.2f %% \n \n', N, rec_nbsvm_1*100);
+                        
                         fprintf('Accuracy %d-Grams (Sub): %.2f %% (%d/%d) \n', N, acc2_svm*100, int32(acc2_svm*total), total);
+                        fprintf('Precision %d-Grams (Sub): %.2f %% \n', N, prec_nbsvm_2*100);
+                        fprintf('Recall %d-Grams (Sub): %.2f %% \n', N, rec_nbsvm_2*100);
                         disp('============================================');
                         
                     end
@@ -354,15 +401,31 @@ for lk=1:numel(Ws)
                         mean(vocSizeOrigs_bi), ...
                         mean(accuracies1_bi), ...
                         std(accuracies1_bi), ...
+                        mean(precisions_bi), ...
+                        std(precisions_bi), ...
+                        mean(recalls_bi), ...
+                        std(recalls_bi), ...
                         mean(p1_bi), ...
                         mean(accuracies1_bi_svm), ...
                         std(accuracies1_bi_svm), ...
+                        mean(precisions_bi_svm), ...
+                        std(precisions_bi_svm), ...
+                        mean(recalls_bi_svm), ...
+                        std(recalls_bi_svm), ...
                         mean(vocSizeSubs_n(:,li)), ...
                         mean(accuracies2_n_nb(:,li)), ...
                         std(accuracies2_n_nb(:,li)), ...
+                        mean(precisions2_n_nb(:,li)), ...
+                        std(precisions2_n_nb(:,li)), ...
+                        mean(recalls2_n_nb(:,li)), ...
+                        std(recalls2_n_nb(:,li)), ...
                         mean(p2_n(:,li)),...
                         mean(accuracies2_n_svm(:,li)), ...
-                        std(accuracies2_n_svm(:,li))};
+                        std(accuracies2_n_svm(:,li)), ...
+                        mean(precisions2_n_svm(:,li)), ...
+                        std(precisions2_n_svm(:,li)), ...
+                        mean(recalls2_n_svm(:,li)), ...
+                        std(recalls2_n_svm(:,li))};
                 end
                 
                 all_results{lj} = results;
