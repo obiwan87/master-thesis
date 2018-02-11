@@ -269,8 +269,7 @@ for lk=1:numel(Ws)
                         training_substitution_map = training_substitution_map_cache;
                         test_substitution_map = test_substitution_map_cache;
                         
-                        for jj=1:N
-                            
+                        for jj=1:N                          
                             %% Calculate substitutions only on Bigrams
                             if jj >N-1 || newFold
                                 cutoff = param_combinations{li,1}(jj);

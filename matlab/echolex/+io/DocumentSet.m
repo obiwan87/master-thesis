@@ -58,6 +58,16 @@ classdef DocumentSet < handle
             end
             
             I = cellfun(@(x) cellfun(@(y) map(y), x), obj.T, 'UniformOutput', false);
+            %             for i=1:numel(obj.T)
+            %                 sentence = obj.T{i};
+            %                 for j=1:numel(sentence)
+            %                     word = sentence(j);
+            %                     if ~map.isKey(word)
+            %                         stop = 1
+            %                     end
+            %                     
+            %                 end
+            %             end
             obj.I = I;
             
         end
