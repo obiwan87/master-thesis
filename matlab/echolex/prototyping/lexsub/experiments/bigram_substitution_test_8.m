@@ -39,32 +39,23 @@ results_fields_acc = {'mean_acc_orig_nb', 'mean_acc_sub_n_nb', 'mean_acc_orig_sv
 param_fields = 1:6;
 prefix = 'public-datasets';
 
+%% Check if dirs are correctly set
+if ~exist('echolex_results', 'var')
+    disp('Please define echolex_results');
+    return
+end
+
+if ~exist('echolex_dumps', 'var')
+    disp('Please define echolex_dumps');
+    return
+end
+
 results_dir_path = fullfile(echolex_results, prefix);
 mkdir(results_dir_path);
 
 %% Some general clustering parameters
 methodNearestClusterAssignment = 'min';
-
-%% Evaluation
-trainingSetSizes = {500, 1000, 1500, 9000};
-runs = 1;
-
-%% LexSub parameters combinations
 scoreFunction = @bayes_hypothesis_probability;
-
-% Find best parameter combination of N-1-Grams
-featureFractions = [0.25 0.5 0.75];
-as = 1; %  Prior weight
-bs = 0.1; % lin comb. weight
-max_distances = [ 0 0.55 2 ];
-params_ngrams = allcomb(featureFractions, as, bs, max_distances);
-
-b0 = params_ngrams(params_ngrams(:,3) == 0,:);
-b0(:,2) = 0;
-b0 = unique(b0, 'rows');
-
-params_ngrams(params_ngrams(:,3) == 0,:) = [];
-params_ngrams = [params_ngrams; b0];
 
 ngram_type = 1; % 2
 if ngram_type == 1
@@ -73,11 +64,51 @@ elseif ngram_type == 2
     load(fullfile(echolex_dumps, 'params_bigrams_all.mat'));
 end
 
+correct = false;
+while ~correct
+    %% Prompt which fractions of parameters should be evaluated
+    params_parts = input('Split params in <X> parts: ');
+    params_fold = input(sprintf('Which fold of params [0-%d]: ', params_parts-1));
+    
+    s1 = params_fold * (size(params_ngrams,1) / params_parts) + 1;
+    s2 = (params_fold + 1) * (size(params_ngrams,1) / params_parts);
+    
+    cellfun(@(x) x.DatasetName, Ws, 'UniformOutput', false)
+    datasets = input('Which datasets do you want to optimize? ');
+    trainingSetSizes = input('Training set size(s): ');   
+    prefix2 = input('Prefix (e.g. size of training set size): ');
+    
+    if isnumeric(prefix2)
+        prefix2 = num2str(prefix2);
+    end
+    
+    options = struct();
+    options.params_parts = params_parts;
+    options.params_fold = params_fold;
+    options.params_explained = [s1 s2];
+    options.datasets = datasets;
+    options.trainingSetSizes = trainingSetSizes;
+    options.prefix2 = prefix2;
+    
+    options
+    
+    correct = input('All inputs correct? (y/n) ', 's');
+    if lower(correct(1)) == 'y'
+        correct = true;
+    else
+        correct = false;
+    end
+end
+
+runs = 1;
+params_ngrams = params_ngrams(s1:s2,:);
+
 %% Iterate through datasets
 %Size of N-Grams?
 minN = 1;
 maxN = 1;
 
+Ws = Ws(datasets);
 for lk=1:numel(Ws)
     
     clear pLs
@@ -163,7 +194,7 @@ for lk=1:numel(Ws)
             for lj=1:numel(trainingSetSizes)
                 %accuracies = zeros(size(param_combinations,1), runs,4);
                 results = cell(size(param_combinations,1), numel(results_fields));
-                trainingSetSize = trainingSetSizes{i};
+                trainingSetSize = trainingSetSizes(lj);
                 
                 r = trainingSetSize/datasetSize;
                 c = -1;
@@ -198,8 +229,6 @@ for lk=1:numel(Ws)
                 vocSizeSubs_n =  zeros(abs_fold, size(param_combinations,1));
                 p2_n = zeros(abs_fold,size(param_combinations,1));
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                
-                blub1 = nan(abs(fold),numel(param_combinations));
                 
                 rng(curr)
                 c = cvpartition(EW.Y, 'kfold', abs(fold));
@@ -400,7 +429,7 @@ for lk=1:numel(Ws)
                         bests_names = {'NB', 'SVM'};
                         
                         for kk=1:numel(bests_names)
-                            for nn=1:min(3, numel(best_nb))                                                               
+                            for nn=1:min(3, numel(best_nb))
                                 best_idx = bests_idx(kk, nn);
                                 best = bests(kk, best_idx);
                                 
@@ -470,7 +499,7 @@ for lk=1:numel(Ws)
             all_results_t = [all_results_t; cell2table(vertcat(all_results{:}),'VariableNames', results_fields)]; %#ok<AGROW>
             all_accs_t = all_results_t(:,[param_fields all_accs_t_fields']);
         end
-        results_filename = sprintf('%s-%d-grams.mat',EW.DatasetName,N);
+        results_filename = sprintf('%s-%s-%d-grams-%d-of-%d.mat', prefix2, EW.DatasetName,N, params_fold, params_parts);
         save(fullfile(results_dir_path, results_filename), 'all_results_t', 'all_accs_t');
     end
 end

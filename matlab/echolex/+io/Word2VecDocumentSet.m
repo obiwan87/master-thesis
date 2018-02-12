@@ -86,7 +86,7 @@ classdef Word2VecDocumentSet < io.DocumentSet
             for i=1:numel(unigrams)
                 w2vMap(unigrams{i}) = unigrams_vi(i);
             end
--2            
+            
             N = unique(obj.B);
             for i=1:numel(N)
                 n = N(i);
