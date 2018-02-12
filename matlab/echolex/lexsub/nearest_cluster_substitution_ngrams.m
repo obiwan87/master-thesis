@@ -1,5 +1,10 @@
 function [ substitutionMap, clusterAssignmentMap, unseenWords, nns, dist] = nearest_cluster_substitution_ngrams(m, N, W, dists, query_V, ref_V, ref_F, clusters, clusterWordMap, varargin )
 
+substitutionMap = containers.Map();
+clusterAssignmentMap = containers.Map();
+nns = [];
+dist = [];
+
 assert(size(clusters,1) == size(ref_V,1));
 assert(size(clusters,1) == size(ref_F,1));
 
@@ -12,6 +17,11 @@ maxDistance = params.MaxDistance;
 unseenWords = setdiff(query_V, ref_V);
 q = W.ViCount & W.B == N;
 V = W.V(q);
+
+if(isempty(unseenWords))
+    substitutionMap = containers.Map();
+    return 
+end
 
 [~,~,Vi_query] = intersect(unseenWords, V);
 [~,~,Vi_ref] = intersect(ref_V, V);
@@ -38,9 +48,6 @@ for i=1:numel(C)
 end
 
 [dist, nns] = sort(cluster_dists, 2, 'ascend');
-
-substitutionMap = containers.Map();
-clusterAssignmentMap = containers.Map();
 
 for i=1:size(nns,1)
     if dist(i,1) <= maxDistance

@@ -38,9 +38,7 @@ results_fields = ...
 results_fields_acc = {'mean_acc_orig_nb', 'mean_acc_sub_n_nb', 'mean_acc_orig_svm', 'mean_acc_sub_n_svm'};
 param_fields = 1:6;
 prefix = 'results_test_run';
-%dtstamp = char(datetime);
-%dtstamp = strrep(dtstamp, ':', '');
-%results_dir_path = fullfile(echolex_dumps, prefix, dtstamp);
+
 results_dir_path = fullfile(echolex_dumps, prefix);  
 mkdir(results_dir_path);
 
@@ -70,7 +68,6 @@ params_ngrams(params_ngrams(:,3) == 0,:) = [];
 params_ngrams = [params_ngrams; b0];
 
 load(fullfile(echolex_dumps, 'params_bigrams_all.mat'));
-% params_ngrams = [0.250000000000000 1 0.300000000000000 0];
 
 %% Iterate through datasets
 
@@ -269,8 +266,7 @@ for lk=1:numel(Ws)
                         training_substitution_map = training_substitution_map_cache;
                         test_substitution_map = test_substitution_map_cache;
                         
-                        for jj=1:N
-                            
+                        for jj=1:N                          
                             %% Calculate substitutions only on Bigrams
                             if jj >N-1 || newFold
                                 cutoff = param_combinations{li,1}(jj);
