@@ -1,4 +1,5 @@
 %% Result reporting
+
 results_fields = ...
     {'holdout', ...
     'cutoff', ...
@@ -66,6 +67,7 @@ end
 
 correct = false;
 while ~correct
+    
     %% Prompt which fractions of parameters should be evaluated
     params_parts = input('Split params in <X> parts: ');
     params_fold = input(sprintf('Which fold of params [0-%d]: ', params_parts-1));
