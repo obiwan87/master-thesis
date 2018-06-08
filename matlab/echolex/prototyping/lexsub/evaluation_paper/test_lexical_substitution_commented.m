@@ -63,14 +63,14 @@ for j=1:size(best_results, 1)
         % The variable public_datasets_test als comes from 'public_datasets_training_val_test.mat'
         testSet = public_datasets_test{i};       
         
-        % Apply lexical substitution takes care of everything. The input are the paraemters a,b,c,d the trainingSet and the testSet.
+        % applyLexicalSubstitution() takes care of everything. The input are the paraemters a,b,c,d the trainingSet and the testSet.
         % The function will return Map-containers (see https://de.mathworks.com/help/matlab/map-containers.html), that represent
         % the substiutions. 
         disp('Applying substitutions... ');
         [trainingSubstitutionMap, oovSubstitutionMap] = applyLexicalSubstitution(trainingSet, a, b, c, testSet, d);
         substitutionMap = [trainingSubstitutionMap; oovSubstitutionMap];
         
-        % Here we apply the substiutions to the datasets
+        % Here we apply the substiutions to the datasets using the function io.Word2VecDocumentSet::applySubstitution()
 
         % For the training set we use the trainingSubstiutionMap
         substitutedTrainingSet = trainingSet.applySubstitution(trainingSubstitutionMap);
