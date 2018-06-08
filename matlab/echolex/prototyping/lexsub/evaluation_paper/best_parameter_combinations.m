@@ -1,6 +1,6 @@
 groups = findgroups(results(:,1:2));
 g = unique(groups);
-nbest = 1:3;
+nbest = 1;
 best_results = [];
 for i=1:numel(g)
     idx = groups == g(i);

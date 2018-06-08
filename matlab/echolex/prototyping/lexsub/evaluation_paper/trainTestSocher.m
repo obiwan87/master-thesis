@@ -107,9 +107,7 @@ if params.trainModel
     [W1, W2, W3, W4, b1, b2, b3, Wcat,bcat, We] = getW(1, theta, params.embedding_size, cat_size, dictionary_length);
     
     %save(['../output/savedParams_CV' num2str(params.CVNUM) '.mat'],'opttheta','params','options');
-    classifyWithRAE
-    all_results(i, :) = [acc_train, acc_test];
-    
+    classifyWithRAE        
 else
     if params.CVNUM ~= 1
         error('This is the optimal file for CV-fold 1')

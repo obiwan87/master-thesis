@@ -9,6 +9,9 @@ for i=1:numel(d)
         f = strsplit(d(i).name, '-');
         if numel(f) >= 2
             load(filename);
+            l = all_results_t.b == 0;
+            all_results_t = all_results_t(l, :);
+            
             datasetName = f{1};
             holdout = f{2};
             holdout = repmat(str2double(holdout), size(all_results_t,1),1);
